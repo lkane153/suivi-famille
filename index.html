@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Suivi de succession</title>
+<style>
+:root{
+  --bg:#F2F4F3; --surface:#FFFFFF; --ink:#16233B; --ink2:#4B5872; --rule:#D6DBE1;
+  --accent:#24508F; --accent-ink:#FFFFFF; --tint:#E7EDF6;
+  --ochre:#8F5810; --ochre-bg:#FAF0DC; --green:#256546; --green-bg:#E2F0E8;
+  --red:#962B2B; --red-bg:#F8E8E6; --mute:#EBEEF0;
+  --serif:"Charter","Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --r:6px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0F1620; --surface:#172130; --ink:#E8ECF2; --ink2:#A6B1C3; --rule:#2C394C;
+    --accent:#8FB3EA; --accent-ink:#0F1620; --tint:#1C2C45;
+    --ochre:#E2B467; --ochre-bg:#38290F; --green:#82CDA7; --green-bg:#16332A;
+    --red:#F1A39C; --red-bg:#3A1C1A; --mute:#1E2A3A;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans)}
+h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.2;margin:0}
+h1{font-size:1.75rem} h2{font-size:1.25rem} h3{font-size:1.05rem}
+p{margin:0}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Structure */
+.app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+.rail{border-right:1px solid var(--rule);padding:24px 14px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;gap:4px}
+.rail .brand{font-family:var(--serif);font-weight:700;font-size:1.05rem;padding:0 10px 16px;line-height:1.25}
+.rail button.nav{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--ink2)}
+.rail button.nav:hover{background:var(--mute)}
+.rail button.nav[aria-current=page]{background:var(--tint);color:var(--ink);font-weight:600}
+.rail button.nav:focus-visible{outline:2px solid var(--accent)}
+.rail .who{margin-top:auto;padding:12px 10px 0;border-top:1px solid var(--rule);font-size:.875rem;color:var(--ink2)}
+.count{font-size:.75rem;background:var(--mute);border-radius:10px;padding:1px 7px;color:var(--ink2);font-weight:600}
+.main{padding:28px 32px 96px;max-width:980px;width:100%}
+.essai{background:var(--ochre-bg);color:var(--ochre);font-size:.875rem;padding:8px 12px;border-radius:var(--r);margin-bottom:22px}
+.topbar{display:none}
+.tabs{display:none}
+@media (max-width:820px){
+  .app{display:block}
+  .rail{display:none}
+  .main{padding:16px 16px 96px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--rule);background:var(--surface);position:sticky;top:0;z-index:5}
+  .topbar .brand{font-family:var(--serif);font-weight:700}
+  .tabs{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--rule);z-index:5;padding-bottom:env(safe-area-inset-bottom)}
+  .tabs button{all:unset;box-sizing:border-box;text-align:center;padding:13px 2px;font-size:.8rem;color:var(--ink2);cursor:pointer}
+  .tabs button[aria-current=page]{color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--accent)}
+  h1{font-size:1.45rem}
+}
+
+/* Blocs */
+.lede{color:var(--ink2);margin-top:6px;max-width:68ch}
+.section{margin-top:34px}
+.section > h2{margin-bottom:12px}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.muted{color:var(--ink2)} .small{font-size:.875rem}
+.ledger{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
+.ledger > .row + .row, .ledger > .sub + .row, .ledger > .row + .sub{border-top:1px solid var(--rule)}
+.row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:12px 14px;cursor:pointer}
+.row:hover{background:var(--mute)}
+.row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.row .t{display:block;font-weight:600;overflow-wrap:anywhere}
+.row .m{font-size:.875rem;color:var(--ink2);display:flex;gap:4px 12px;flex-wrap:wrap;margin-top:2px}
+.row.off .t{color:var(--ink2);font-weight:500}
+.row.plain{cursor:default}.row.plain:hover{background:none}
+.sub{padding:9px 14px;background:var(--mute);font-size:.875rem;color:var(--ink2)}
+.empty{padding:18px 14px;color:var(--ink2)}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink2);flex:none}
+.dot.doing{border-color:var(--accent);background:linear-gradient(90deg,var(--accent) 50%,transparent 50%)}
+.dot.wait{border-color:var(--ochre);border-style:dashed}
+.dot.block{border-color:var(--red);background:var(--red)}
+.dot.done{border-color:var(--green);background:var(--green)}
+.dot.na{border-color:var(--rule);background:var(--rule)}
+.chip{display:inline-block;font-size:.78rem;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--mute);color:var(--ink2);white-space:nowrap}
+.chip.todo{background:var(--mute)} .chip.doing{background:var(--tint);color:var(--accent)}
+.chip.wait,.chip.warn{background:var(--ochre-bg);color:var(--ochre)}
+.chip.block,.chip.late{background:var(--red-bg);color:var(--red)}
+.chip.done{background:var(--green-bg);color:var(--green)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--tint);color:var(--accent);font-size:.75rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.av.none{background:none;border:1.5px dashed var(--ink2);color:var(--ink2)}
+
+/* Échéancier */
+.rail-time{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
+.rail-time button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;padding:0 14px 14px;cursor:pointer;border-left:1px solid var(--rule);min-width:0}
+.rail-time button:first-child{border-left:0}
+.rail-time button:hover{background:var(--mute)}
+.rail-time button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.bar{height:5px;background:var(--mute);margin:0 -14px 12px;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.bar.over i{background:var(--red)} .bar.ok i{background:var(--green)}
+.rail-time .when{font-family:var(--serif);font-size:1.35rem;font-weight:700;line-height:1.15}
+.rail-time .d{font-size:.875rem;color:var(--ink2)}
+.rail-time .l{font-weight:600;margin-top:8px;font-size:.95rem}
+@media (max-width:820px){
+  .rail-time{grid-template-columns:1fr}
+  .rail-time button{border-left:0;border-top:1px solid var(--rule)}
+  .rail-time button:first-child{border-top:0}
+}
+
+/* Garde-fous */
+details.guard{background:var(--red-bg);border-radius:var(--r);margin-top:18px}
+details.guard summary{cursor:pointer;padding:11px 14px;font-weight:700;color:var(--red)}
+details.guard ul{margin:0;padding:0 14px 14px 34px}
+details.guard li{margin-top:6px}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+@media (max-width:820px){.cols{grid-template-columns:1fr;gap:0}}
+.prog{display:grid;grid-template-columns:minmax(0,1fr) 90px 44px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--rule);font-size:.95rem}
+.prog:first-of-type{border-top:0}
+.meter{height:6px;background:var(--mute);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--green)}
+.prog .n{text-align:right;color:var(--ink2);font-size:.875rem;font-variant-numeric:tabular-nums}
+
+/* Boutons et champs */
+.btn{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:var(--r);background:var(--accent);color:var(--accent-ink);font-weight:600;cursor:pointer;min-height:40px}
+.btn:hover{filter:brightness(1.1)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.ghost{background:none;color:var(--accent);border:1px solid var(--rule)}
+.btn.ghost:hover{background:var(--mute);filter:none}
+.btn.danger{background:none;color:var(--red);border:1px solid var(--rule)}
+.btn.sm{padding:5px 10px;min-height:32px;font-size:.875rem}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.filters button{all:unset;box-sizing:border-box;padding:6px 12px;border:1px solid var(--rule);border-radius:16px;font-size:.875rem;cursor:pointer;color:var(--ink2);background:var(--surface)}
+.filters button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
+.filters button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label.f{display:block;font-size:.875rem;font-weight:600;margin-top:14px}
+label.f span.h{font-weight:400;color:var(--ink2)}
+input[type=text],input[type=date],input[type=url],input[type=number],input[type=time],select,textarea{width:100%;margin-top:5px;padding:9px 10px;border:1px solid var(--rule);border-radius:var(--r);background:var(--surface);min-height:42px}
+textarea{min-height:84px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+@media (max-width:520px){.grid2{grid-template-columns:1fr}}
+.inline{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.inline > *{flex:1 1 140px}.inline > .btn{flex:0 0 auto}
+
+/* Panneau de détail */
+.back{position:fixed;inset:0;background:rgba(10,18,30,.45);z-index:20}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--bg);z-index:21;overflow:auto;padding:20px 22px 60px;border-left:1px solid var(--rule)}
+.sheet .x{position:sticky;top:0;float:right;z-index:2}
+.sheet h2{font-size:1.3rem;padding-right:90px}
+.sheet h3{margin-top:26px;margin-bottom:8px}
+.sheet .kv{margin-top:14px}
+.sheet .kv dt{font-size:.875rem;font-weight:600}
+.sheet .kv dd{margin:2px 0 12px;color:var(--ink2)}
+.sheet ul{margin:4px 0 0;padding-left:20px;color:var(--ink2)}
+.item{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);padding:10px 12px;margin-top:8px;overflow-wrap:anywhere}
+.item .by{font-size:.8rem;color:var(--ink2);margin-top:4px}
+.item .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.reply{border-left:3px solid var(--rule);padding-left:10px;margin-top:8px}
+.note{background:var(--tint);border-radius:var(--r);padding:10px 12px;font-size:.9rem;margin-top:12px}
+.note.warn{background:var(--ochre-bg);color:var(--ochre)}
+
+/* Tables de référence */
+details.ref{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);margin-top:10px}
+details.ref > summary{cursor:pointer;padding:12px 14px;font-family:var(--serif);font-weight:700;font-size:1.05rem}
+details.ref > div{padding:0 14px 14px}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th{text-align:left;font-weight:700;border-bottom:2px solid var(--ink);padding:6px 8px 6px 0;vertical-align:bottom}
+td{border-bottom:1px solid var(--rule);padding:8px 8px 8px 0;vertical-align:top}
+@media (max-width:820px){
+  table,tbody,tr,td{display:block;width:100%}
+  thead{display:none}
+  tr{border-bottom:2px solid var(--rule);padding:8px 0}
+  td{border:0;padding:2px 0}
+  td::before{content:attr(data-l) " : ";font-weight:700}
+  td:first-child{font-weight:700;font-family:var(--serif);font-size:1rem}
+  td:first-child::before{content:""}
+}
+.src{font-size:.875rem;margin-top:6px}
+.src li{margin-top:4px}
+
+/* Accueil, choix de la personne */
+.overlay{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.overlay .box{max-width:440px;width:100%}
+.overlay .people{display:grid;gap:8px;margin-top:18px}
+.overlay .people button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r);cursor:pointer;font-weight:600}
+.overlay .people button:hover{border-color:var(--accent)}
+.overlay .people button:focus-visible{outline:2px solid var(--accent)}
+.toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r);z-index:50;font-size:.9rem;max-width:90vw}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:in .16s ease-out}@keyframes in{from{transform:translateX(24px);opacity:0}}}
+
+.horsligne{background:var(--red-bg);color:var(--red)}
+.acts-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:820px){.row.person{grid-template-columns:auto minmax(0,1fr)}.row.person .acts-row{grid-column:1 / -1;justify-content:flex-start}}
+input:disabled{opacity:.6}
+
+</style>
+</head>
+<body>
+<header class="topbar"><span class="brand">Suivi de succession</span><button class="btn ghost sm" data-vue="famille" data-moi></button></header>
+<div class="app">
+  <nav class="rail" aria-label="Rubriques">
+    <div class="brand">Suivi de succession</div>
+    <div id="rail-nav"></div>
+    <div class="who">Vous consultez en tant que<br><strong data-moi></strong></div>
+  </nav>
+  <main class="main">
+    <div class="essai" id="essai">Version d’essai. Vos saisies restent dans ce navigateur : rien n’est encore partagé avec la famille.</div>
+    <div class="essai horsligne" id="horsligne" role="status" hidden></div>
+    <div id="vue"></div>
+  </main>
+</div>
+<nav class="tabs" id="tabs" aria-label="Rubriques"></nav>
+<div class="back" id="fond" hidden></div>
+<aside class="sheet" id="fiche" tabindex="-1" aria-label="Détail" hidden></aside>
+<div class="overlay" id="choix" hidden><div class="box">
+  <h1>Qui êtes-vous ?</h1>
+  <p class="lede">Chaque mise à jour, question ou pièce versée portera votre nom.</p>
+  <div class="people" id="choix-liste"></div>
+</div></div>
+<div class="overlay" id="acces" hidden><div class="box">
+  <h1>Espace familial privé</h1>
+  <p class="lede">Ouvrez cette page avec le lien personnel que vous avez reçu. Vous pouvez aussi le coller ici.</p>
+  <p class="note warn" id="acces-message" hidden></p>
+  <label class="f" for="acces-code">Votre lien personnel</label><input type="text" id="acces-code" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <p style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="entrerCode">Entrer</button><button class="btn ghost" id="acces-reessayer" data-act="reessayer" hidden>Réessayer</button></p>
+</div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script src="config.js"></script>
+<script>
+/* Contenu de référence public, tiré du guide « Décès au Sénégal : parcours administratif,
+   successoral et patrimonial » (mise à jour du 10 octobre 2026). Aucune donnée familiale ici. */
+const GUIDE = {
+  maj: "10 octobre 2026",
+  avertissement: "Ce suivi reprend un guide qui décrit le droit et les procédures publiques identifiables au 10 octobre 2026. Il ne remplace pas l’examen du dossier par un notaire, un avocat, l’administration fiscale ou l’institution concernée. Les listes de pièces des banques, assureurs, organismes sociaux et administrations peuvent varier.",
+
+  sources: {
+    S1: ["Ministère de la Justice, Code de la famille du Sénégal", "https://justice.sec.gouv.sn/wp-content/uploads/2021/01/CODE-DE-LA-FAMILLE.pdf"],
+    S2: ["Ministère de la Justice, Jugement d’hérédité", "https://justice.sec.gouv.sn/services-aux-usagers/jugement-dheredite/"],
+    S3: ["Ministère de la Justice, Administration légale des biens d’un mineur", "https://justice.sec.gouv.sn/services-aux-usagers/administration-legale/"],
+    S4: ["ANEC, Digitalisation : LGEC/NEKKAL, RNEC, ANEC 360, plateforme usagers", "https://anec.sn/digitalisation/"],
+    S5: ["ANEC, Journée africaine de l’état civil 2026 : état du déploiement", "https://anec.sn/2026/08/07/%F0%9D%90%89%F0%9D%90%A8%F0%9D%90%AE%F0%9D%90%AB%F0%9D%90%A7%F0%9D%90%9E%F0%9D%90%9E-%F0%9D%90%9A%F0%9D%90%9F%F0%9D%90%AB%F0%9D%90%A2%F0%9D%90%9C%F0%9D%90%9A%F0%9D%90%A2%F0%9D%90%A7%F0%9D%90%9E/"],
+    S6: ["ANEC, Partenaires institutionnels et interopérabilité état civil", "https://anec.sn/partenaires-institutionnels/"],
+    S7: ["Service public Sénégal, démarches état civil", "https://bo.senegalservices.sn/demarches/citoyennete-justice-et-securite/etat-civil"],
+    S8: ["DGID, Code général des impôts, édition 2025", "https://www.dgid.sn/storage/docs/CGI-2025.pdf"],
+    S9: ["DGID, SENTAX", "https://www.dgid.sn/sentax"],
+    S10: ["DGID, SenTimbre", "https://www.dgid.sn/articles/lancement-de-sentimbre"],
+    S11: ["DGID, Lois, règlements et téléservices", "https://www.dgid.sn/loi-reglement"],
+    S12: ["DGID, Mutation par décès d’un permis d’occuper", "https://www.dgid.sn/fiches/mutation-permis-occuper"],
+    S13: ["Direction générale du Budget, Services pensions", "https://www.budget.gouv.sn/categories/public_visualiser/pensions"],
+    S14: ["Direction générale du Budget, Direction des Pensions", "https://www.budget.gouv.sn/directions-dgb/direction-des-pensions"],
+    S15: ["IPRES, formulaire de demande de réversion de retraite (via Service public Sénégal)", "https://bo.senegalservices.sn/storage/piece_jointes/F-reversion-retraite.pdf"],
+    S16: ["OMPI / WIPO Lex, Loi n° 2008-09 du 25 janvier 2008 sur le droit d’auteur", "https://www.wipo.int/wipolex/en/legislation/details/5764"],
+    S17: ["Ministère de la Culture, SODAV et gestion collective", "https://www.culture.gouv.sn/index.php/2024/05/15/visite-de-travail-a-la-sodav-la-remuneration-de-la-copie-privee-au-coeur-des-priorites/"],
+    S18: ["Service public Sénégal, Demander une curatelle", "https://bo.senegalservices.sn/demarches/papiers/documents-judiciaires/demander-une-curatelle"]
+  },
+
+  gardeFous: [
+    "Ne pas commencer par le partage des biens. L’ordre est : état civil, preuve des héritiers, inventaire et fiscalité, libération des actifs, puis partage.",
+    "Ne pas vider un compte, vendre un bien, transférer des titres ni détruire des documents.",
+    "Ne pas utiliser les cartes, applications, identifiants bancaires ou mots de passe du défunt.",
+    "Ne pas ouvrir un coffre-fort librement : le CGI prévoit une ouverture en présence d’un notaire, avec information du service de l’Enregistrement.",
+    "Ne signer aucune réédition, adaptation ou cession nouvelle avant l’audit des droits existants.",
+    "Conserver un testament trouvé dans son état : il se présente au juge du lieu d’ouverture de la succession."
+  ],
+
+  /* Échéances légales : mois à compter du décès */
+  echeances: [
+    { id: "e1", mois: 1, titre: "Déclaration du décès à l’état civil", detail: "Délai franc d’un mois. Décès à domicile : la famille s’assure elle-même que la déclaration est faite.", ref: "Code de la famille, art. 67", src: "S1", action: "A3" },
+    { id: "e3", mois: 3, titre: "Enregistrement d’un testament notarié", detail: "Seulement si un testament a été déposé chez un notaire ou reçu par lui. Jusqu’à cette date, aucun héritier ne peut être contraint de prendre parti.", ref: "CGI, art. 464 ; Code de la famille, art. 411", src: "S8", action: "C1" },
+    { id: "e4", mois: 4, titre: "Inventaire de la succession", detail: "Si la succession relève du droit musulman et que le bénéfice d’inventaire est recherché.", ref: "Code de la famille, art. 645", src: "S1", action: "C5" },
+    { id: "e12", mois: 12, titre: "Déclaration fiscale de mutation par décès", detail: "À déposer au bureau de l’Enregistrement du domicile du défunt, sauf exceptions du CGI.", ref: "CGI, art. 464", src: "S8", action: "D3" }
+  ],
+
+  chantiers: [
+    { id: "A", titre: "État civil et inhumation" },
+    { id: "B", titre: "Dossier familial" },
+    { id: "C", titre: "Succession" },
+    { id: "D", titre: "Fiscalité" },
+    { id: "E", titre: "Institutions" },
+    { id: "F", titre: "Patrimoine" },
+    { id: "G", titre: "Clôture" }
+  ],
+
+  /* Modèles d’actions : la checklist maître du guide, enrichie des étapes détaillées */
+  actions: [
+    { id: "A1", ch: "A", titre: "Certificat médical de décès obtenu", quoi: "Constat du décès par un médecin ou une formation sanitaire.", intrants: ["Identité du défunt", "Constat ou certificat médical de décès"], acteur: "Médecin, formation sanitaire", resultat: "Certificat médical de décès", src: ["S1"], pieces: ["d_certmed"] },
+    { id: "A2", ch: "A", titre: "Permis d’inhumer obtenu", quoi: "Délivré sur présentation du certificat médical, sur papier libre et sans frais.", intrants: ["Certificat médical de décès"], acteur: "Officier de l’état civil", resultat: "Permis d’inhumer", src: ["S1"], prereq: ["A1"], pieces: ["d_permis"] },
+    { id: "A3", ch: "A", titre: "Déclaration à l’état civil vérifiée", quoi: "Le décès a eu lieu à domicile : aucun établissement ne l’a déclaré d’office. Vérifier que la déclaration a bien été faite, demander le nom du centre d’état civil saisi et la référence de l’acte enregistré.", intrants: ["Informations d’état civil du défunt", "Justificatif médical"], acteur: "Centre d’état civil du lieu de décès", resultat: "Acte de décès inscrit au registre", src: ["S1"], prereq: ["A1"], mois: 1 },
+    { id: "A4", ch: "A", titre: "Acte de décès : copies papier et numériques obtenues", quoi: "Demander plusieurs extraits ou copies certifiées : le tribunal, la DGID, les banques, les pensions, les assurances et les mutations foncières en demanderont. Garder un exemplaire numérique de bonne qualité. La plateforme Sama État Civil permet la demande en ligne si la commune est activée.", intrants: ["Référence de l’acte"], acteur: "Centre d’état civil, Sama État Civil si disponible", resultat: "Jeu de copies pour toutes les démarches", src: ["S1", "S5"], prereq: ["A3"], pieces: ["d_acte"] },
+
+    { id: "B1", ch: "B", titre: "Actes de mariage réunis", quoi: "Nécessaires pour le jugement d’hérédité et la pension de réversion.", intrants: ["Certificat(s) de mariage"], acteur: "Famille", resultat: "Actes de mariage disponibles", src: ["S2"], pieces: ["d_mariage", "d_livret"] },
+    { id: "B2", ch: "B", titre: "Actes de naissance des enfants et héritiers réunis", quoi: "Un acte de naissance par enfant.", intrants: ["Actes de naissance des enfants"], acteur: "Famille", resultat: "Actes de naissance disponibles", src: ["S2"], pieces: ["d_naissances"] },
+    { id: "B3", ch: "B", titre: "Deux témoins identifiés pour le jugement d’hérédité", quoi: "Le tribunal demande la carte d’identité de deux témoins.", intrants: ["CNI de deux témoins"], acteur: "Famille", resultat: "Témoins disponibles, copies de leurs CNI", src: ["S2"], pieces: ["d_temoins"] },
+    { id: "B4", ch: "B", titre: "Pièces d’identité des héritiers copiées", quoi: "Une copie lisible par héritier.", intrants: ["CNI ou passeport de chaque héritier"], acteur: "Chaque héritier", resultat: "Copies réunies", src: [], pieces: ["d_identites"] },
+
+    { id: "C1", ch: "C", titre: "Testament recherché et sécurisé", quoi: "Chercher dans les papiers, chez le notaire, à la banque. Si un testament est trouvé, le conserver dans son état : il est présenté au juge du lieu d’ouverture de la succession, qui en ordonne le dépôt chez un notaire. Un testament déposé chez un notaire ou reçu par lui s’enregistre dans les trois mois du décès.", intrants: ["Papiers personnels", "Coordonnées du notaire habituel"], acteur: "Famille, notaire, juge", resultat: "Existence d’un testament confirmée ou écartée", src: ["S1", "S8"], mois: 3, pieces: ["d_testament"] },
+    { id: "C2", ch: "C", titre: "Notaire ou conseil juridique choisi", quoi: "Le guide recommande un notaire dès le départ lorsque le dossier comporte des biens immobiliers et des droits intellectuels : il évite les démarches en double et peut devenir le point de coordination juridique.", intrants: ["Accord de la famille"], acteur: "Famille", resultat: "Notaire ou avocat désigné, ou décision de s’en passer", src: ["S1"] },
+    { id: "C3", ch: "C", titre: "Régime successoral analysé", quoi: "Le Code de la famille contient des règles de droit commun et un titre sur les successions de droit musulman. Ce dernier s’applique si le défunt a manifesté, expressément ou par un comportement indiscutable, la volonté que son héritage soit dévolu selon ces règles. Ne pas le déduire de la seule appartenance religieuse : réunir les éléments et obtenir une lecture juridique avant tout partage.", intrants: ["Actes familiaux", "Testament et volontés établies"], acteur: "Famille, juge, notaire ou conseil", resultat: "Cadre juridique applicable", src: ["S1"], prereq: ["C1"] },
+    { id: "C4", ch: "C", titre: "Jugement d’hérédité ou preuve équivalente obtenu", quoi: "Demande par les héritiers au tribunal du dernier domicile du défunt ou du lieu du décès. Un acte de notoriété ou un intitulé d’inventaire dressé par un notaire établit aussi la qualité d’héritier.", intrants: ["Acte de décès", "Certificat(s) de mariage", "Actes de naissance des enfants", "CNI de deux témoins"], acteur: "Tribunal du dernier domicile, ou notaire", resultat: "Jugement d’hérédité établissant les héritiers", src: ["S2", "S1"], prereq: ["A4", "B1", "B2", "B3"], pieces: ["d_heredite"] },
+    { id: "C5", ch: "C", titre: "Inventaire de l’actif et du passif ouvert", quoi: "Photographie fiable du patrimoine avant toute décision. Chaque héritier peut accepter purement et simplement, accepter sous bénéfice d’inventaire ou renoncer. En droit musulman, la présomption d’acceptation sous bénéfice d’inventaire suppose un inventaire dans les quatre mois.", intrants: ["Actif", "Dettes", "Liste des héritiers"], acteur: "Famille, notaire, greffe", resultat: "Inventaire formalisé", src: ["S1"], mois: 4 },
+    { id: "C6", ch: "C", titre: "Mineurs et incapables identifiés et protégés", quoi: "Administration légale à demander au tribunal s’il y a un héritier mineur.", intrants: [], acteur: "Tribunal d’instance", resultat: "Cadre de représentation du mineur", src: ["S3"] },
+
+    { id: "D1", ch: "D", titre: "Bureau de la DGID compétent identifié", quoi: "La déclaration s’enregistre au bureau de l’Enregistrement du domicile du défunt.", intrants: ["Adresse du dernier domicile"], acteur: "DGID, Enregistrement", resultat: "Bureau et interlocuteur connus", src: ["S8"] },
+    { id: "D2", ch: "D", titre: "Valeurs des biens documentées", quoi: "Faire établir une valeur documentée des immeubles et des autres biens pour la déclaration fiscale et le partage.", intrants: ["Inventaire", "Rapports d’expertise ou d’évaluation"], acteur: "Expert, notaire", resultat: "Valeurs justifiées", src: ["S8"], prereq: ["C5"] },
+    { id: "D3", ch: "D", titre: "Déclaration de mutation par décès déposée", quoi: "À déposer dans l’année du décès. Ne pas calculer seuls les droits : le service compétent les liquide. Confirmer auprès du bureau si la formalité est possible en ligne sur SENTAX.", intrants: ["Inventaire", "Héritiers établis", "Valeurs"], acteur: "DGID, Enregistrement", resultat: "Déclaration enregistrée", src: ["S8", "S9"], prereq: ["C4", "D1", "D2"], mois: 12, pieces: ["d_declaration"] },
+    { id: "D4", ch: "D", titre: "Droits liquidés et payés, ou non-exigibilité constatée", quoi: "Les timbres fiscaux se génèrent via SenTimbre.", intrants: ["Déclaration enregistrée"], acteur: "DGID", resultat: "Quittance ou constat de non-exigibilité", src: ["S8", "S10"], prereq: ["D3"] },
+    { id: "D5", ch: "D", titre: "Certificat d’acquit des droits obtenu", quoi: "Document clé : les dépositaires le réclament avant de remettre aux ayants droit les titres, sommes et valeurs détenus pour le défunt.", intrants: ["Droits payés ou non exigibles"], acteur: "DGID, Enregistrement", resultat: "Certificat d’acquit", src: ["S8"], prereq: ["D4"], pieces: ["d_acquit"] },
+
+    { id: "E1", ch: "E", titre: "Banques notifiées", quoi: "Pour chaque établissement : notifier le décès avec l’acte de décès et demander le solde au jour du décès, la liste des comptes, placements et crédits, la procédure interne de succession et les pièces finales requises. Créer une fiche par banque dans Institutions.", intrants: ["Acte de décès", "Preuve du lien"], acteur: "Chaque banque", resultat: "Dossiers ouverts, comptes sécurisés", src: ["S8"], prereq: ["A4"] },
+    { id: "E2", ch: "E", titre: "Assureurs notifiés", quoi: "Identifier chaque police (vie, décès, accident, emprunteur, automobile, habitation) et demander la liste des pièces. Une assurance-vie peut relever de sa clause bénéficiaire plutôt que du partage : faire vérifier le contrat.", intrants: ["Acte de décès", "Polices d’assurance"], acteur: "Chaque assureur", resultat: "Dossiers ouverts", src: [], prereq: ["A4"] },
+    { id: "E3", ch: "E", titre: "Direction des Pensions notifiée", quoi: "Fonctionnaire décédé après la retraite : dossier de réversion de la pension. La liste finale des pièces se confirme selon le type de bénéficiaire.", intrants: ["Acte de décès", "Preuve du mariage", "Pièces d’identité et de naissance du conjoint et des enfants", "Matricule de pension", "Jugement d’hérédité selon le dossier", "Coordonnées bancaires"], acteur: "Direction des Pensions, Point E, Dakar", resultat: "Dossier de réversion instruit", src: ["S13", "S14"], prereq: ["A4", "B1"], pieces: ["d_pension"] },
+    { id: "E4", ch: "E", titre: "IPRES et CSS : situation vérifiée", quoi: "À déterminer : y a-t-il eu une carrière dans le secteur privé ouvrant des droits ? Si oui, déposer une demande de réversion. Sinon, passer cette action en « Non applicable ».", intrants: ["Numéro d’immatriculation IPRES", "Dernier employeur"], acteur: "IPRES, CSS", resultat: "Droits instruits ou absence de droits confirmée", src: ["S15"] },
+    { id: "E5", ch: "E", titre: "Sociétés et associations où il avait un mandat notifiées", quoi: "À déterminer : recenser les mandats sociaux, conseils et associations, puis les notifier.", intrants: ["Liste des mandats"], acteur: "Chaque société ou association", resultat: "Organismes informés", src: [], prereq: ["A4"] },
+
+    { id: "F1", ch: "F", titre: "Immobilier inventorié et titres localisés", quoi: "Identifier pour chaque bien le titre exact : titre foncier, permis d’occuper, bail. La liste de pièces du permis d’occuper ne vaut pas pour un titre foncier : saisir le notaire ou la Conservation compétente.", intrants: ["Titres fonciers, permis d’occuper, baux", "Plans cadastraux", "Taxes foncières"], acteur: "Famille, notaire, Conservation foncière", resultat: "Liste des biens avec leur titre", src: ["S12"], pieces: ["d_titres"] },
+    { id: "F2", ch: "F", titre: "Véhicules inventoriés", quoi: "Recenser cartes grises, assurances, gages ou crédits et valeur.", intrants: ["Cartes grises"], acteur: "Famille", resultat: "Liste des véhicules", src: [] },
+    { id: "F3", ch: "F", titre: "Parts sociales, actions et comptes courants d’associé inventoriés", quoi: "À déterminer. Inventorier séparément la propriété des titres, les fonctions de dirigeant, les comptes courants d’associé, les garanties personnelles et les dividendes dus.", intrants: ["Statuts", "Registres de titres", "Pactes d’associés"], acteur: "Famille, sociétés concernées", resultat: "Liste des participations", src: [] },
+    { id: "F4", ch: "F", titre: "Contrats d’édition, licences et droits d’auteur inventoriés", quoi: "Par œuvre et par territoire : contrats d’édition, de traduction, droits poche, scolaire, numérique, audio, adaptation audiovisuelle et théâtre, relevés de droits, avances, droits échus non payés, mandats et comptes SODAV.", intrants: ["Contrats", "Relevés de droits", "Catalogue des œuvres"], acteur: "Famille, éditeurs, SODAV", resultat: "Tableau des droits par œuvre", src: ["S16", "S17"], pieces: ["d_contrats"] },
+    { id: "F5", ch: "F", titre: "Éditeurs, licenciés et SODAV notifiés", quoi: "Notifier chaque partenaire et demander sa procédure successorale interne, une copie de tous les contrats en vigueur et un état des droits dus à la date du décès. Créer une fiche par partenaire dans Institutions.", intrants: ["Acte de décès", "Liste des partenaires"], acteur: "Éditeurs, licenciés, SODAV", resultat: "Partenaires informés, états des droits reçus", src: ["S16", "S17"], prereq: ["A4"] },
+    { id: "F6", ch: "F", titre: "Interlocuteur habilité désigné pour les droits d’auteur", quoi: "Après l’établissement des héritiers et des mandats, désigner la personne habilitée à recevoir les relevés et les paiements.", intrants: ["Jugement d’hérédité", "Mandat des héritiers"], acteur: "Héritiers", resultat: "Interlocuteur unique connu des partenaires", src: ["S16"], prereq: ["C4"] },
+    { id: "F7", ch: "F", titre: "Archives et manuscrits sécurisés", quoi: "Manuscrits publiés et inédits, correspondances, photographies. Distinguer trois sujets : les droits d’auteur sur les œuvres, la propriété physique des archives et manuscrits, le droit d’usage du nom et de l’image.", intrants: ["Manuscrits", "Correspondances", "Archives"], acteur: "Famille", resultat: "Archives localisées, inventoriées et à l’abri", src: ["S16"] },
+    { id: "F8", ch: "F", titre: "Téléphones, ordinateurs et comptes numériques recensés", quoi: "Conserver les appareils sans contourner les sécurités. Identifier domaines, stockage en ligne, réseaux sociaux et abonnements. Demander aux plateformes leur procédure prévue en cas de décès.", intrants: ["Appareils", "Liste des comptes"], acteur: "Famille", resultat: "Liste des comptes et abonnements", src: [] },
+
+    { id: "G1", ch: "G", titre: "Dettes réglées ou provisionnées", quoi: "L’actif brut n’est pas la part disponible des héritiers. Recenser et justifier les dettes, cautions personnelles et crédits assurés avant le partage.", intrants: ["Inventaire du passif"], acteur: "Héritiers, notaire", resultat: "Passif apuré ou provisionné", src: ["S1", "S8"], prereq: ["C5"] },
+    { id: "G2", ch: "G", titre: "Actifs mutés ou libérés", quoi: "Comptes, droits immobiliers, pensions, droits d’auteur : chacun au nom des ayants droit.", intrants: ["Jugement d’hérédité", "Certificat d’acquit", "Pièces propres à chaque bien"], acteur: "DGID, Conservation, banques, éditeurs, SODAV", resultat: "Actifs au nom des ayants droit", src: ["S8", "S12"], prereq: ["C4", "D5"] },
+    { id: "G3", ch: "G", titre: "Partage formalisé", quoi: "Dernière étape, une fois l’actif net connu et les dettes payées.", intrants: ["Actif net", "Accords et décisions"], acteur: "Héritiers, notaire ou tribunal si besoin", resultat: "Acte de partage", src: ["S1"], prereq: ["G1", "G2"] },
+    { id: "G4", ch: "G", titre: "Dossier permanent archivé", quoi: "Copies de toutes les décisions et quittances, conservées par la famille.", intrants: ["Décisions", "Quittances"], acteur: "Coordinateur", resultat: "Archive familiale", src: [], prereq: ["G3"] }
+  ],
+
+  /* Pièces attendues */
+  categoriesPieces: ["État civil", "Famille", "Succession", "Fiscalité", "Pension", "Immobilier", "Œuvres et droits d’auteur", "Banques et assurances", "Autres"],
+  pieces: [
+    { id: "d_certmed", cat: "État civil", titre: "Certificat médical de décès" },
+    { id: "d_permis", cat: "État civil", titre: "Permis d’inhumer" },
+    { id: "d_acte", cat: "État civil", titre: "Acte de décès (extraits et copies certifiées)" },
+    { id: "d_livret", cat: "Famille", titre: "Livret de famille" },
+    { id: "d_mariage", cat: "Famille", titre: "Acte(s) de mariage" },
+    { id: "d_naissances", cat: "Famille", titre: "Actes de naissance des enfants" },
+    { id: "d_identites", cat: "Famille", titre: "Pièces d’identité des héritiers" },
+    { id: "d_temoins", cat: "Famille", titre: "CNI des deux témoins" },
+    { id: "d_testament", cat: "Succession", titre: "Testament, donations antérieures" },
+    { id: "d_heredite", cat: "Succession", titre: "Jugement d’hérédité" },
+    { id: "d_declaration", cat: "Fiscalité", titre: "Déclaration de mutation par décès" },
+    { id: "d_acquit", cat: "Fiscalité", titre: "Certificat d’acquit des droits" },
+    { id: "d_pension", cat: "Pension", titre: "Matricule et titre de pension" },
+    { id: "d_titres", cat: "Immobilier", titre: "Titres fonciers, permis d’occuper, baux" },
+    { id: "d_contrats", cat: "Œuvres et droits d’auteur", titre: "Contrats d’édition et relevés de droits" }
+  ],
+
+  /* Inventaire : catégories de l’étape 3 du guide */
+  categoriesInventaire: [
+    ["Banques et placements", "Banques, comptes, dépôts à terme, titres, coffres-forts, crédits et garanties."],
+    ["Immobilier", "Titres fonciers, permis d’occuper, baux, plans cadastraux, taxes foncières, évaluations."],
+    ["Sociétés", "Statuts, RCCM, actions et parts, pactes d’associés, mandats sociaux, comptes courants d’associé."],
+    ["Assurances", "Vie, décès, accidents, habitation, automobile, contrats d’emprunt assurés."],
+    ["Retraite et emploi", "Matricule de solde ou de pension, IPRES, employeurs, bulletins, attestations."],
+    ["Œuvres et propriété intellectuelle", "Contrats d’édition, traduction, audiovisuel, audio, licences, relevés de droits, SODAV, manuscrits."],
+    ["Véhicules et biens enregistrés", "Cartes grises, assurances, gages, crédits."],
+    ["Actifs numériques", "Domaines internet, comptes cloud, catalogues numériques, appareils, abonnements."],
+    ["Passif", "Prêts, cautions, dettes fiscales, loyers, factures, engagements contractuels, litiges."]
+  ],
+
+  typesInstitution: ["Administration", "Tribunal", "Notaire ou avocat", "Banque", "Assurance", "Éditeur ou licencié", "Gestion collective", "Société ou association", "Autre"],
+
+  /* Fiches d’institutions connues du guide (contacts vérifiés au 10 octobre 2026) */
+  institutions: [
+    { id: "i_ec", nom: "Centre d’état civil du lieu de décès", type: "Administration", note: "À identifier : demander le nom du centre saisi et la référence de l’acte.", actions: ["A3", "A4"] },
+    { id: "i_trib", nom: "Tribunal du dernier domicile", type: "Tribunal", note: "Jugement d’hérédité.", actions: ["C4"] },
+    { id: "i_dgid", nom: "DGID, bureau de l’Enregistrement", type: "Administration", adresse: "Rue de Thiong x Vincens, Dakar", tel: "33 889 20 02", email: "contact@dgid.sn", note: "Coordonnées générales de la DGID. Le bureau compétent est celui du domicile du défunt.", actions: ["D1", "D3", "D5"] },
+    { id: "i_pens", nom: "Direction des Pensions", type: "Administration", adresse: "Rue 2 x Boulevard de l’Est, Point E, Dakar", tel: "33 825 73 31 / 33 860 41 38", note: "Pension de réversion.", actions: ["E3"] },
+    { id: "i_anec", nom: "ANEC (Agence nationale de l’état civil)", type: "Administration", adresse: "Dieuppeul Derklé, Dakar", tel: "33 814 68 13", email: "contact@anec.sn", note: "Plateforme Sama État Civil pour les demandes d’actes en ligne, selon la commune.", actions: ["A4"] },
+    { id: "i_sodav", nom: "SODAV", type: "Gestion collective", note: "Société sénégalaise de gestion collective des droits d’auteur et droits voisins.", actions: ["F5"] }
+  ],
+
+  /* Tables de référence */
+  parcours12: [
+    ["1", "Constater le décès", "Certificat médical ou constat ; identité", "Médecin, établissement sanitaire", "Certificat de décès, base du permis d’inhumer", "Immédiat"],
+    ["2", "Obtenir le permis d’inhumer", "Certificat médical", "Officier d’état civil ou chef de village", "Permis d’inhumer gratuit", "Avant inhumation"],
+    ["3", "Déclarer le décès", "Informations d’état civil ; justificatif médical", "Centre d’état civil du lieu de décès", "Acte de décès inscrit au registre", "Dans le mois ; hôpital : 24 h"],
+    ["4", "Obtenir plusieurs actes et extraits", "Référence de l’acte", "État civil, Sama État Civil si disponible", "Jeu de copies pour toutes les démarches", "Dès l’enregistrement"],
+    ["5", "Sécuriser l’actif et le passif", "Documents, clés, contrats, relevés", "Famille, notaire ou avocat si utile", "Inventaire documentaire ; gel des décisions irréversibles", "Jours 1 à 15"],
+    ["6", "Identifier testament et régime successoral", "Actes familiaux, testament, volontés établies", "Famille, juge, notaire, conseil", "Cadre juridique applicable", "Semaines 1 à 3"],
+    ["7", "Établir la qualité d’héritier", "Acte de décès, mariage, naissances, 2 témoins", "Tribunal compétent, ou notaire selon la voie", "Jugement d’hérédité, acte de notoriété ou intitulé d’inventaire", "Dès les pièces réunies"],
+    ["8", "Inventorier et traiter les mineurs", "Actif, dettes, héritiers mineurs", "Notaire, greffe, tribunal", "Inventaire ; administration légale ou tutelle si nécessaire", "Avant les actes de disposition"],
+    ["9", "Notifier les institutions", "Acte de décès et preuve du lien", "Banques, assureurs, employeur, DGB, IPRES, CSS", "Dossiers ouverts ; comptes sécurisés ; droits sociaux instruits", "En parallèle"],
+    ["10", "Déclarer la succession fiscalement", "Inventaire, héritiers, valeurs", "DGID, Enregistrement", "Droits liquidés ; certificat d’acquit ou de non-exigibilité", "Dans l’année"],
+    ["11", "Muter et libérer les actifs", "Hérédité, fiscalité, pièces propres au bien", "DGID et Conservation, banques, sociétés, SODAV", "Actifs au nom des ayants droit ; paiement des droits", "Après les prérequis"],
+    ["12", "Partager et archiver", "Actif net, dettes payées, accords et décisions", "Héritiers, notaire ou tribunal si besoin", "Partage ; clôture des dossiers ; archive familiale", "Final"]
+  ],
+  delais: [
+    ["24 heures", "Déclaration par l’administration d’un hôpital, d’une clinique ou d’une formation sanitaire", "Décès dans l’établissement", "Code de la famille, art. 69"],
+    ["1 mois franc", "Déclaration ordinaire du décès", "Date du décès", "Code de la famille, art. 67"],
+    ["1 mois + 15 jours à 1 an", "Fenêtre de déclaration tardive, avec certificat médical ou deux témoins majeurs", "Date du décès", "Code de la famille, art. 67"],
+    ["3 mois", "Enregistrement des testaments déposés chez un notaire ou reçus par lui", "Décès du testateur", "CGI, art. 464"],
+    ["3 mois", "Période durant laquelle l’héritier ne peut être contraint de prendre parti", "Dévolution de la succession", "Code de la famille, art. 411"],
+    ["4 mois", "Inventaire pour la présomption d’acceptation bénéficiaire en succession de droit musulman", "Décès", "Code de la famille, art. 645"],
+    ["1 an", "Déclaration fiscale de mutation par décès", "Date du décès, sauf exceptions", "CGI, art. 464"]
+  ],
+  fiscal: [
+    ["Abattement", "200 000 000 FCFA sur l’actif successoral net", "Faire établir l’actif net et les dettes déductibles avant liquidation."],
+    ["Époux et ligne directe", "2 % pour les mutations à titre gratuit entre époux et en ligne directe", "Le lien de parenté doit être correctement documenté."],
+    ["Autres mutations par décès", "5 %", "Le taux réel dépend de la dévolution et des exonérations ou déductions éventuelles."],
+    ["Déclaration sans droit proportionnel significatif", "Droit fixe prévu par le CGI", "À liquider par le service compétent."]
+  ],
+  profils: [
+    ["Fonctionnaire retraité", "Direction des Pensions", "Acte de décès ; matricule de pension ; conjoint et enfants ; RIB ; autres pièces requises", "Réversion de la pension"],
+    ["Auteur, artiste", "Éditeurs, SODAV, licenciés, notaire ou conseil", "Acte de décès ; hérédité ; contrats ; catalogue ; relevés de droits", "Continuité de gestion des droits, paiements, nouvelles autorisations"],
+    ["Propriétaire immobilier", "DGID, Conservation, notaire", "Titre exact, décès, hérédité, fiscalité, plan ou évaluation", "Mutation du droit immobilier"],
+    ["Salarié ou retraité IPRES", "IPRES ; CSS selon le cas", "Acte de décès ; n° IPRES ; dernier employeur ; conjoint(s) ; enfants à charge", "Dossier de réversion, prestations selon statut"],
+    ["Dirigeant ou associé de société", "Société, notaire ou avocat, greffe et RCCM selon besoin", "Statuts, titres, pactes, hérédité, mandat social", "Transmission des titres, remplacement de gouvernance si nécessaire"]
+  ],
+  portails: [
+    ["Sama État Civil", "ANEC", "Oui, si la commune est activée", "Demande, paiement, suivi et réception d’actes"],
+    ["LGEC / NEKKAL, RNEC, ANEC 360", "ANEC", "Non", "Outils internes de l’état civil : aucune démarche pour la famille"],
+    ["e-Sénégal, services Justice", "Ministère de la Justice", "Partiellement", "Orientation vers les démarches judiciaires"],
+    ["SENTAX", "DGID", "Oui, selon profil", "Télédéclaration et télépaiement : vérifier si la formalité successorale est disponible en ligne"],
+    ["SenTimbre", "DGID", "Oui", "Timbres fiscaux numériques, seuls reconnus depuis le 20 juillet 2026"],
+    ["Portail CSS-IPRES", "CSS, IPRES", "Selon service", "Réversion et prestations : confirmer la procédure actuelle"],
+    ["Systèmes internes des banques et assureurs", "Privé", "Non", "Après notification : liste de pièces propre à chaque établissement"]
+  ],
+  vigilance: [
+    ["Succession internationale", "Si des biens, comptes, contrats ou héritiers se trouvent dans plusieurs pays, ouvrir un sous-dossier par pays. Le jugement sénégalais ne suffit pas forcément à muter un actif à l’étranger."],
+    ["Dettes et garanties", "Recenser et justifier les dettes avant le partage. Identifier toutes les cautions personnelles et les crédits assurés."],
+    ["Identité numérique", "Conserver téléphones et ordinateurs sans contourner les sécurités. Passer par les procédures prévues par les plateformes en cas de décès."],
+    ["Personnalité publique", "Séparer trois sujets : les droits d’auteur sur les œuvres, la propriété physique des archives et manuscrits, le droit d’usage du nom et de l’image. Chacun peut avoir un titulaire, un contrat et une stratégie de transmission différents."]
+  ]
+};
+
+
+/* Dossier de départ, construit à partir du guide et des données du dossier. */
+function etatInitial(G, C) {
+  const c = o => JSON.parse(JSON.stringify(o));
+  return {
+    v: 1,
+    meta: c(C.meta),
+    people: C.people.map((p, i) => ({ ordre: i, ...c(p) })),
+    actions: G.actions.map(a => ({ id: a.id, statut: (C.statuts[a.id] || {}).statut || "a_faire", resp: "", echeance: "", note: (C.statuts[a.id] || {}).note || "" })),
+    pieces: G.pieces.map(p => ({ id: p.id, cat: p.cat, titre: p.titre, detenteur: "", copies: "", fichiers: [], liens: [], remises: [], note: "" })),
+    institutions: G.institutions.map(i => ({ id: i.id, nom: i.nom, type: i.type, adresse: i.adresse || "", tel: i.tel || "", email: i.email || "", contact: "", dernierContact: "", ref: "", prochaine: "", limite: "", resp: "", statut: "a_contacter", note: i.note || "", actions: i.actions || [] })),
+    inventaire: [], questions: [], decisions: [], journal: []
+  };
+}
+
+const BACKEND = (window.SUIVI_CONFIG || { url: "", key: "" });
+(() => {
+"use strict";
+
+/* ---------- Outils ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const clone = o => JSON.parse(JSON.stringify(o));
+const iso = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const today = () => iso(new Date());
+function addMonths(s, n) {
+  const d = parse(s), day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth() + n);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, last));
+  return iso(d);
+}
+const days = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+const okDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
+const fmt = s => okDate(s) ? parse(s).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "";
+const fmtCourt = s => okDate(s) ? parse(s).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "";
+const fmtJour = s => okDate(s) ? parse(s).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "";
+const fmtQuand = t => new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + " à " + new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const taille = n => n > 1048576 ? (n / 1048576).toFixed(1).replace(".", ",") + " Mo" : Math.max(1, Math.round(n / 1024)) + " Ko";
+const pluriel = (n, un, pl) => n + " " + (n > 1 ? pl : un);
+const heure = h => { const [a, b] = String(h).split(":"); return Number(a) + " h" + (b && b !== "00" ? " " + b : ""); };
+const phrase = t => { t = String(t || "").trim(); return t && !/[.!?]$/.test(t) ? t + "." : t; };
+const lienSur = u => /^https?:\/\//i.test(u || "");
+
+/* ---------- Stockage local ---------- */
+const KEY = "suivi-succession-v1", KEY_MOI = "suivi-succession-moi", KEY_CODE = "suivi-famille-acces";
+const mem = {};
+const ls = {
+  get(k) { try { const v = localStorage.getItem(k); return v === null ? (mem[k] ?? null) : v; } catch (e) { return mem[k] ?? null; } },
+  set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) { /* aperçu sans stockage : on garde en mémoire */ } },
+  del(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) { /* idem */ } }
+};
+const fichiersMem = new Map();
+function ouvrirBase() {
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open("suivi-succession-fichiers", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("f");
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    } catch (e) { rej(e); }
+  });
+}
+
+/* ---------- Mode partagé : la base fait foi, la page s’y synchronise ---------- */
+const PARTAGE = typeof CASE_SEED === "undefined";
+const BASE = { url: String((BACKEND && BACKEND.url) || "").trim().replace(/\/+$/, "").replace(/\/rest\/v1$/, ""), key: String((BACKEND && BACKEND.key) || "").trim() };
+const COLLS = ["people", "actions", "pieces", "institutions", "inventaire", "questions", "decisions", "journal"];
+const MORCEAU = 384 * 1024;
+const DEFINITIF = /^(demande_invalide|reserve_coordination|espace_plein|fichier_incomplet|introuvable|lien_requis)$/;
+let code = null, ver = 0, estAdmin = false, acces = [], pret = false;
+const instantane = new Map();
+const canon = o => JSON.stringify(o, (k, v) => v && typeof v === "object" && !Array.isArray(v) ? Object.keys(v).sort().reduce((r, x) => (r[x] = v[x], r), {}) : v);
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+async function rpc(fn, args) {
+  let r;
+  try {
+    r = await fetch(BASE.url + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json", apikey: BASE.key }, /^eyJ/.test(BASE.key) ? { Authorization: "Bearer " + BASE.key } : {}),
+      body: JSON.stringify(args)
+    });
+  } catch (e) { throw new Error("reseau"); }
+  let j = null; try { j = await r.json(); } catch (e) { /* réponse vide */ }
+  if (!r.ok) { const m = (j && j.message) || "http_" + r.status; throw Object.assign(new Error(m), { refus: m === "acces_refuse", definitif: DEFINITIF.test(m) }); }
+  return j;
+}
+/* Nouvel essai sur les pannes passagères (réseau, serveur occupé), jamais sur un refus. */
+async function insister(f) {
+  for (let i = 0; ; i++) {
+    try { return await f(); }
+    catch (e) { if (e.refus || e.definitif || i >= 3) throw e; await pause(900 * (i + 1)); }
+  }
+}
+
+/* ---------- Fichiers ---------- */
+const enB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = () => rej(r.error); r.readAsDataURL(blob); });
+const deB64 = s => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+async function ecrireFichier(id, blob, suivre) {
+  if (PARTAGE) {
+    const n = Math.max(1, Math.ceil(blob.size / MORCEAU));
+    await insister(() => rpc("suivi_fichier_ouvrir", { p_code: code, p_id: id, p_nom: blob.name || "fichier", p_type: blob.type || "", p_taille: blob.size, p_morceaux: n }));
+    for (let i = 0; i < n; i++) {
+      const d = await enB64(blob.slice(i * MORCEAU, (i + 1) * MORCEAU));
+      await insister(() => rpc("suivi_fichier_morceau", { p_code: code, p_id: id, p_n: i, p_b64: d }));
+      if (suivre) suivre(i + 1, n);
+    }
+    return n;
+  }
+  fichiersMem.set(id, blob);
+  try {
+    const db = await ouvrirBase();
+    await new Promise((res, rej) => { const t = db.transaction("f", "readwrite"); t.objectStore("f").put(blob, id); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  } catch (e) { /* reste en mémoire pour la session */ }
+  return 1;
+}
+async function lireFichier(f, suivre) {
+  if (PARTAGE) {
+    const n = f.n || 1, parts = [];
+    for (let i = 0; i < n; i++) {
+      parts.push(deB64((await insister(() => rpc("suivi_fichier_lire", { p_code: code, p_id: f.id, p_n: i }))).b64));
+      if (suivre) suivre(i + 1, n);
+    }
+    return new Blob(parts, { type: f.type || "application/octet-stream" });
+  }
+  if (fichiersMem.has(f.id)) return fichiersMem.get(f.id);
+  try {
+    const db = await ouvrirBase();
+    return await new Promise((res, rej) => { const q = db.transaction("f").objectStore("f").get(f.id); q.onsuccess = () => res(q.result || null); q.onerror = () => rej(q.error); });
+  } catch (e) { return null; }
+}
+async function supprimerFichier(id) {
+  if (PARTAGE) { try { await rpc("suivi_fichier_supprimer", { p_code: code, p_id: id }); } catch (e) { /* le fichier n’est plus référencé : sans effet pour la famille */ } return; }
+  fichiersMem.delete(id);
+  try { const db = await ouvrirBase(); db.transaction("f", "readwrite").objectStore("f").delete(id); } catch (e) { /* rien à supprimer */ }
+}
+
+/* ---------- État ---------- */
+const vide = () => ({ v: 1, meta: {}, people: [], actions: [], pieces: [], institutions: [], inventaire: [], questions: [], decisions: [], journal: [] });
+let S = vide(), moi = null;
+if (!PARTAGE) {
+  try { S = JSON.parse(ls.get(KEY) || "null"); } catch (e) { S = null; }
+  if (!S || S.v !== 1) S = etatInitial(GUIDE, CASE_SEED);
+  moi = ls.get(KEY_MOI);
+  if (!S.people.some(p => p.id === moi)) moi = null;
+}
+const ui = { vue: "accueil", fiche: null, filtre: "toutes", onglet: "questions", lien: null };
+
+function ranger() {
+  const selon = (liste, ref) => { const o = new Map(ref.map((x, i) => [x.id, i])); liste.sort((a, b) => (o.has(a.id) ? o.get(a.id) : 1e6) - (o.has(b.id) ? o.get(b.id) : 1e6) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)); };
+  selon(S.actions, GUIDE.actions); selon(S.pieces, GUIDE.pieces); selon(S.institutions, GUIDE.institutions); selon(S.inventaire, []);
+  S.people.sort((a, b) => (a.ordre ?? 999) - (b.ordre ?? 999) || (a.id < b.id ? -1 : 1));
+  for (const c of ["journal", "questions", "decisions"]) S[c].sort((a, b) => (b.le || 0) - (a.le || 0));
+}
+/* Intègre des éléments venus de la base. Une modification locale pas encore envoyée garde la priorité. */
+function appliquer(items) {
+  let change = false;
+  for (const it of items) {
+    const k = it.coll + ":" + it.id;
+    if (it.coll === "meta") {
+      const local = canon(S.meta), s = canon(it.data);
+      if (instantane.has(k) && local !== instantane.get(k)) continue;
+      if (local !== s) { S.meta = it.data; change = true; }
+      instantane.set(k, s); continue;
+    }
+    const liste = S[it.coll]; if (!Array.isArray(liste)) continue;
+    const i = liste.findIndex(o => o.id === it.id), local = i >= 0 ? canon(liste[i]) : null;
+    if (local !== null && local !== instantane.get(k)) continue;
+    if (it.supprime) { if (i >= 0) { liste.splice(i, 1); change = true; } instantane.delete(k); continue; }
+    const s = canon(it.data);
+    if (local !== s) { if (i >= 0) liste[i] = it.data; else liste.push(it.data); change = true; }
+    instantane.set(k, s);
+  }
+  if (change) ranger();
+  return change;
+}
+function changements() {
+  const out = [], vus = new Set();
+  const voir = (coll, id, o) => { const k = coll + ":" + id, s = canon(o); vus.add(k); if (instantane.get(k) !== s) out.push({ coll, id, data: o, s }); };
+  if (estAdmin) voir("meta", "meta", S.meta); else vus.add("meta:meta");
+  for (const c of COLLS) for (const o of S[c]) { if (c === "people" && !estAdmin) vus.add(c + ":" + o.id); else voir(c, o.id, o); }
+  for (const k of instantane.keys()) {
+    if (vus.has(k)) continue;
+    const p = k.indexOf(":"), coll = k.slice(0, p);
+    if (coll !== "journal" && coll !== "people" && coll !== "meta") out.push({ coll, id: k.slice(p + 1), supprime: true });
+  }
+  return out;
+}
+
+let minuteurEnvoi, envoiEnCours = false, encore = false, essais = 0, horsLigne = false, echecEnvoi = false, tirEnCours = false, aRedessiner = false;
+function majEtat() {
+  const e = $("#horsligne");
+  e.hidden = !(horsLigne || echecEnvoi);
+  e.textContent = echecEnvoi ? "Connexion interrompue : vos dernières modifications ne sont pas encore enregistrées. Gardez cette page ouverte, l’envoi reprend tout seul." : "Connexion interrompue : les mises à jour de la famille reprendront au retour du réseau.";
+}
+function sauver() {
+  if (!PARTAGE) return ls.set(KEY, JSON.stringify(S));
+  clearTimeout(minuteurEnvoi); minuteurEnvoi = setTimeout(envoyer, 250);
+}
+async function envoyer() {
+  if (!pret) return;
+  if (envoiEnCours) { encore = true; return; }
+  const ch = changements(); if (!ch.length) return;
+  envoiEnCours = true;
+  try {
+    for (let i = 0; i < ch.length; i += 100) {
+      const lot = ch.slice(i, i + 100);
+      await rpc("suivi_pousser", { p_code: code, p_items: lot.map(x => x.supprime ? { coll: x.coll, id: x.id, supprime: true } : { coll: x.coll, id: x.id, data: x.data }) });
+      for (const x of lot) { if (x.supprime) instantane.delete(x.coll + ":" + x.id); else instantane.set(x.coll + ":" + x.id, x.s); }
+    }
+    essais = 0; if (echecEnvoi) { echecEnvoi = false; majEtat(); }
+  } catch (e) {
+    envoiEnCours = false;
+    if (e.refus) return sortir("Votre lien a été remplacé ou révoqué. Demandez un nouveau lien à la personne qui coordonne.");
+    if (e.definitif) { dire(e.message === "reserve_coordination" ? "Cette modification est réservée à la personne qui coordonne." : "Cette modification n’a pas pu être enregistrée."); return entrer(); }
+    echecEnvoi = true; majEtat(); essais++;
+    clearTimeout(minuteurEnvoi); minuteurEnvoi = setTimeout(envoyer, Math.min(30000, 2000 * essais));
+    return;
+  }
+  envoiEnCours = false;
+  if (encore) { encore = false; envoyer(); }
+}
+async function tirer() {
+  if (!pret || tirEnCours) return;
+  tirEnCours = true;
+  try {
+    const r = await rpc("suivi_tirer", { p_code: code, p_depuis: ver });
+    const droits = canon(r.acces) !== canon(acces) || r.admin !== estAdmin;
+    acces = r.acces; estAdmin = r.admin;
+    const ch = appliquer(r.items);
+    ver = Math.max(ver, r.ver);
+    if (horsLigne) { horsLigne = false; majEtat(); }
+    if (ch || droits) redessinerDoux();
+  } catch (e) {
+    if (e.refus) sortir("Votre lien a été remplacé ou révoqué. Demandez un nouveau lien à la personne qui coordonne.");
+    else if (!horsLigne) { horsLigne = true; majEtat(); }
+  } finally { tirEnCours = false; }
+}
+async function entrer() {
+  $("#acces").hidden = true; $("#choix").hidden = true;
+  if (!pret) $("#vue").innerHTML = `<p class="lede">Ouverture du dossier…</p>`;
+  try {
+    const r = await insister(() => rpc("suivi_entrer", { p_code: code }));
+    S = vide(); instantane.clear();
+    moi = r.moi; estAdmin = r.admin; acces = r.acces; ver = r.ver;
+    appliquer(r.items); ranger();
+    pret = true; horsLigne = false; echecEnvoi = false; majEtat();
+    rendre();
+  } catch (e) {
+    if (e.refus) return sortir("Ce lien n’est pas valable, ou il a été remplacé. Demandez un nouveau lien à la personne qui coordonne.");
+    ecranAcces("Connexion impossible pour le moment. Vérifiez votre réseau, puis réessayez.");
+  }
+}
+function ecranAcces(message) {
+  $("#acces-message").textContent = message || "";
+  $("#acces-message").hidden = !message;
+  $("#acces-reessayer").hidden = !code;
+  $("#acces").hidden = false;
+}
+function sortir(message) {
+  code = null; pret = false; ls.del(KEY_CODE);
+  ui.fiche = null; $("#fiche").hidden = true; $("#fond").hidden = true; $("#vue").innerHTML = "";
+  ecranAcces(message);
+}
+const enSaisie = () => { const a = document.activeElement; return !!a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "file"; };
+/* Redessine après une mise à jour venue d’un autre membre, sans couper une saisie ni perdre un brouillon. */
+function redessinerDoux() {
+  if (enSaisie()) { aRedessiner = true; return; }
+  aRedessiner = false;
+  const brouillons = {};
+  document.querySelectorAll("#vue [id], #fiche [id]").forEach(e => { if (/^(INPUT|TEXTAREA)$/.test(e.tagName) && e.type !== "file" && !e.dataset.set && e.value) brouillons[e.id] = e.value; });
+  rendre();
+  for (const id in brouillons) { const e = document.getElementById(id); if (e) e.value = brouillons[id]; }
+}
+
+function journal(texte, ref) {
+  S.journal.unshift({ id: uid("j"), le: Date.now(), par: moi, texte, ref: ref || "" });
+  if (!PARTAGE && S.journal.length > 300) S.journal.length = 300;
+}
+
+/* ---------- Lectures ---------- */
+const STATUTS = { a_faire: ["À faire", "todo"], en_cours: ["En cours", "doing"], attente: ["En attente d’un tiers", "wait"], bloque: ["Bloqué", "block"], fait: ["Fait", "done"], na: ["Non applicable", "na"] };
+const ST_INST = { a_contacter: ["À contacter", "todo"], contacte: ["Contacté", "doing"], dossier: ["Dossier ouvert", "doing"], attente: ["En attente de leur réponse", "wait"], clos: ["Clos", "done"] };
+const ST_INV = { identifie: ["Identifié", "todo"], documente: ["Documenté", "doing"], evalue: ["Évalué", "doing"], regle: ["Réglé", "done"] };
+const ST_PIECE = { a_localiser: ["À localiser", "todo"], localisee: ["Localisée", "wait"], versee: ["Versée", "done"] };
+
+const modele = id => GUIDE.actions.find(a => a.id === id);
+function action(id) {
+  const s = S.actions.find(a => a.id === id); if (!s) return null;
+  const m = modele(id) || s;
+  return { ...s, ch: m.ch, titre: m.titre, quoi: m.quoi || "", intrants: m.intrants || [], acteur: m.acteur || "", resultat: m.resultat || "", src: m.src || [], prereq: m.prereq || [], mois: m.mois || 0, pieces: m.pieces || [], perso: !modele(id) };
+}
+const actions = () => S.actions.map(a => action(a.id));
+const personne = id => S.people.find(p => p.id === id);
+const nom = id => (personne(id) || {}).nom || "";
+const prenom = id => nom(id).split(" ")[0] || "";
+const initiales = n => { const w = String(n).trim().split(/\s+/); return ((w[0] || "")[0] || "").toUpperCase() + (w.length > 1 ? (w[w.length - 1][0] || "").toUpperCase() : ""); };
+const membres = () => S.people.filter(p => p.role !== "sans_action");
+const clos = a => a.statut === "fait" || a.statut === "na";
+const attend = a => a.prereq.map(action).filter(p => p && !clos(p));
+const echeance = a => a.echeance || (a.mois && okDate(S.meta.dateDeces) ? addMonths(S.meta.dateDeces, a.mois) : "");
+const etatPiece = p => (p.fichiers.length || p.liens.length) ? "versee" : (p.detenteur ? "localisee" : "a_localiser");
+const piece = id => S.pieces.find(p => p.id === id);
+const preuveManquante = a => a.statut === "fait" && a.pieces.some(id => piece(id) && etatPiece(piece(id)) !== "versee");
+const questionsDe = id => S.questions.filter(q => q.action === id);
+
+function puceEcheance(a) {
+  const e = echeance(a); if (!e || clos(a)) return "";
+  const j = days(today(), e);
+  if (j < 0) return `<span class="chip late">En retard de ${pluriel(-j, "jour", "jours")}</span>`;
+  if (j <= 21) return `<span class="chip warn">${j === 0 ? "Aujourd’hui" : "Dans " + pluriel(j, "jour", "jours")}</span>`;
+  return `<span>Avant le ${esc(fmtCourt(e))}</span>`;
+}
+const avatar = id => id ? `<span class="av" title="${esc(nom(id))}">${esc(initiales(nom(id)))}</span>` : `<span class="av none" title="À attribuer">?</span>`;
+const chip = (table, k) => { const d = table[k] || ["", "todo"]; return `<span class="chip ${d[1]}">${esc(d[0])}</span>`; };
+const sources = ids => ids.filter(i => GUIDE.sources[i]).map(i => `<li><a href="${esc(GUIDE.sources[i][1])}" target="_blank" rel="noopener noreferrer">${esc(GUIDE.sources[i][0])}</a></li>`).join("");
+const options = (table, val) => Object.entries(table).map(([k, v]) => `<option value="${k}"${k === val ? " selected" : ""}>${esc(v[0])}</option>`).join("");
+const optionsGens = (val, vide) => `<option value="">${esc(vide)}</option>` + membres().map(p => `<option value="${p.id}"${p.id === val ? " selected" : ""}>${esc(p.nom)}</option>`).join("");
+
+/* ---------- Lignes ---------- */
+function ligneAction(a) {
+  const st = STATUTS[a.statut], att = attend(a), q = questionsDe(a.id).filter(x => !x.resolue).length;
+  const m = [];
+  m.push(a.resp ? esc(nom(a.resp)) : (clos(a) ? "" : `<span class="chip warn">À attribuer</span>`));
+  if (a.statut !== "a_faire") m.push(`<span class="chip ${st[1]}">${esc(st[0])}</span>`);
+  m.push(puceEcheance(a));
+  if (att.length && !clos(a)) m.push(`<span>Attend : ${esc(att.map(p => p.titre).join(" ; "))}</span>`);
+  if (preuveManquante(a)) m.push(`<span class="chip warn">Pièce à verser</span>`);
+  if (q) m.push(`<span class="chip doing">${pluriel(q, "question", "questions")}</span>`);
+  return `<button class="row${clos(a) ? " off" : ""}" data-fiche="action:${a.id}">
+    <span class="dot ${st[1]}" aria-hidden="true"></span>
+    <span><span class="t">${esc(a.titre)}</span><span class="m">${m.filter(Boolean).join("")}</span></span>
+    ${avatar(a.resp)}</button>`;
+}
+
+/* ---------- Vues ---------- */
+function vueAccueil() {
+  const d = S.meta.dateDeces, as = actions();
+  const depuis = okDate(d) ? days(d, today()) : null;
+  const ouvertes = as.filter(a => !clos(a));
+  const pretes = ouvertes.filter(a => !attend(a).length).sort((x, y) => (echeance(x) || "9999").localeCompare(echeance(y) || "9999")).slice(0, 6);
+  const miennes = ouvertes.filter(a => a.resp === moi);
+  const sansResp = ouvertes.filter(a => !a.resp).length;
+  const qOuvertes = S.questions.filter(q => !q.resolue);
+  const etats = S.pieces.reduce((o, p) => (o[etatPiece(p)]++, o), { a_localiser: 0, localisee: 0, versee: 0 });
+
+  const jalons = GUIDE.echeances.map((e, i) => {
+    const a = action(e.action), date = okDate(d) ? addMonths(d, e.mois) : "";
+    const debut = okDate(d) ? (i ? addMonths(d, GUIDE.echeances[i - 1].mois) : d) : "";
+    const reste = date ? days(today(), date) : null;
+    const fini = a && clos(a);
+    const pct = date ? Math.max(0, Math.min(100, Math.round(100 * days(debut, today()) / Math.max(1, days(debut, date))))) : 0;
+    const quand = fini ? (a.statut === "na" ? "Sans objet" : "Fait") : reste === null ? "Date à saisir" : reste < 0 ? "Dépassée de " + pluriel(-reste, "jour", "jours") : reste === 0 ? "Aujourd’hui" : "Dans " + pluriel(reste, "jour", "jours");
+    return `<button data-fiche="action:${e.action}">
+      <div class="bar${fini ? " ok" : reste !== null && reste < 0 ? " over" : ""}"><i style="width:${fini ? 100 : pct}%"></i></div>
+      <div class="when">${esc(quand)}</div>
+      <div class="d">${date ? "Avant le " + esc(fmt(date)) : ""}</div>
+      <div class="l">${esc(e.titre)}</div>
+      <div class="d">${esc(e.detail)}</div></button>`;
+  }).join("");
+
+  const avancement = GUIDE.chantiers.map(c => {
+    const l = as.filter(a => a.ch === c.id && a.statut !== "na"), f = l.filter(a => a.statut === "fait").length;
+    return `<div class="prog"><span>${c.id}. ${esc(c.titre)}</span><span class="meter"><i style="width:${l.length ? Math.round(100 * f / l.length) : 0}%"></i></span><span class="n">${f} / ${l.length}</span></div>`;
+  }).join("");
+
+  return `
+  <h1>${esc(S.meta.titre)}</h1>
+  <p class="lede">${okDate(d) ? "Décès le " + esc(fmtJour(d)) + (S.meta.heureDeces ? " à " + esc(heure(S.meta.heureDeces)) : "") + ". " : ""}${esc(phrase(S.meta.lieuDeces))}${depuis !== null ? " Il y a " + pluriel(depuis, "jour", "jours") + "." : ""}</p>
+
+  <details class="guard"><summary>À ne pas faire tant que les héritiers ne sont pas établis</summary>
+    <ul>${GUIDE.gardeFous.map(g => `<li>${esc(g)}</li>`).join("")}</ul></details>
+
+  <section class="section"><div class="head"><h2>Échéances légales</h2><span class="muted small">Comptées depuis le ${esc(fmt(d)) || "décès"}</span></div>
+    <div class="rail-time">${jalons}</div></section>
+
+  <section class="section"><div class="head"><h2>Ce qui peut avancer maintenant</h2>
+    ${sansResp ? `<button class="btn ghost sm" data-filtre="libres">${pluriel(sansResp, "action sans responsable", "actions sans responsable")}</button>` : ""}</div>
+    <div class="ledger">${pretes.map(ligneAction).join("") || `<div class="empty">Toutes les actions ouvertes attendent une étape précédente.</div>`}</div></section>
+
+  <section class="section"><div class="head"><h2>Mes actions</h2><span class="muted small">${esc(nom(moi))}</span></div>
+    <div class="ledger">${miennes.map(ligneAction).join("") || `<div class="empty">Aucune action ne vous est attribuée. Ouvrez une action dans le parcours et choisissez « Je m’en charge ».</div>`}</div></section>
+
+  <div class="cols">
+    <section class="section"><h2>Avancement</h2>${avancement}</section>
+    <section class="section"><h2>Pièces</h2>
+      <div class="prog"><span>Versées dans le dossier</span><span></span><span class="n">${etats.versee}</span></div>
+      <div class="prog"><span>Localisées, à verser</span><span></span><span class="n">${etats.localisee}</span></div>
+      <div class="prog"><span>À localiser</span><span></span><span class="n">${etats.a_localiser}</span></div>
+      <p style="margin-top:12px"><button class="btn ghost sm" data-vue="pieces">Recenser les pièces</button></p>
+    </section>
+  </div>
+
+  <section class="section"><div class="head"><h2>Questions en attente</h2><button class="btn ghost sm" data-vue="questions">Poser une question</button></div>
+    <div class="ledger">${qOuvertes.slice(0, 4).map(ligneQuestion).join("") || `<div class="empty">Aucune question en attente.</div>`}</div></section>
+
+  <section class="section"><h2>Dernières mises à jour</h2>
+    <div class="ledger">${S.journal.slice(0, 8).map(ligneJournal).join("") || `<div class="empty">Rien pour l’instant. Chaque changement s’inscrit ici avec son auteur.</div>`}</div></section>`;
+}
+const ligneJournal = j => `<div class="row plain">${avatar(j.par)}<span><span>${esc(prenom(j.par) || "Quelqu’un")} ${esc(j.texte)}</span><span class="m">${esc(fmtQuand(j.le))}</span></span><span></span></div>`;
+function ligneQuestion(q) {
+  const a = q.action ? action(q.action) : null;
+  return `<button class="row${q.resolue ? " off" : ""}" data-fiche="question:${q.id}">${avatar(q.par)}
+    <span><span class="t">${esc(q.texte)}</span><span class="m"><span>Pour ${esc(q.pour)}</span>${a ? `<span>${esc(a.titre)}</span>` : ""}<span>${pluriel(q.reponses.length, "réponse", "réponses")}</span></span></span>
+    ${q.resolue ? `<span class="chip done">Résolue</span>` : `<span class="chip warn">En attente</span>`}</button>`;
+}
+
+function vueParcours() {
+  const as = actions();
+  const garde = { toutes: () => true, ouvertes: a => !clos(a), miennes: a => a.resp === moi, libres: a => !a.resp && !clos(a) }[ui.filtre];
+  const noms = { toutes: "Toutes", ouvertes: "Ouvertes", miennes: "Les miennes", libres: "Sans responsable" };
+  const blocs = GUIDE.chantiers.map(c => {
+    const tous = as.filter(a => a.ch === c.id), l = tous.filter(garde);
+    const app = tous.filter(a => a.statut !== "na"), f = app.filter(a => a.statut === "fait").length;
+    if (!l.length && ui.filtre !== "toutes") return "";
+    return `<section class="section"><div class="head"><h2>${c.id}. ${esc(c.titre)}</h2><span class="muted small">${f} sur ${app.length}</span></div>
+      <div class="ledger">${l.map(ligneAction).join("")}</div>
+      <p style="margin-top:8px"><button class="btn ghost sm" data-act="ajouterAction" data-ch="${c.id}">Ajouter une action</button></p></section>`;
+  }).join("");
+  return `<h1>Parcours</h1>
+  <p class="lede">Les actions suivent l’ordre du guide : état civil, preuve des héritiers, inventaire et fiscalité, libération des actifs, partage. Ouvrez une action pour vous l’attribuer, changer son statut, verser une pièce ou poser une question.</p>
+  <div class="filters">${Object.keys(noms).map(k => `<button data-filtre="${k}" aria-pressed="${ui.filtre === k}">${noms[k]}</button>`).join("")}</div>
+  ${blocs || `<div class="section empty">Aucune action dans ce filtre.</div>`}`;
+}
+
+function vuePieces() {
+  const cats = [...new Set([...GUIDE.categoriesPieces, ...S.pieces.map(p => p.cat)])];
+  return `<h1>Pièces</h1>
+  <p class="lede">Pour chaque pièce : qui détient l’original, combien de copies existent, et un scan versé ici. Les originaux remis à un organisme se notent dans la fiche de la pièce.</p>
+  <p style="margin-top:14px"><button class="btn" data-act="ajouterPiece">Ajouter une pièce</button></p>
+  ${cats.map(c => {
+    const l = S.pieces.filter(p => p.cat === c); if (!l.length) return "";
+    return `<section class="section"><h2>${esc(c)}</h2><div class="ledger">${l.map(p => {
+      const n = p.fichiers.length + p.liens.length;
+      return `<button class="row" data-fiche="piece:${p.id}"><span class="dot ${ST_PIECE[etatPiece(p)][1]}" aria-hidden="true"></span>
+        <span><span class="t">${esc(p.titre)}</span><span class="m">${p.detenteur ? `<span>Original : ${esc(p.detenteur)}</span>` : ""}${p.copies ? `<span>${pluriel(Number(p.copies) || 0, "copie", "copies")}</span>` : ""}${n ? `<span>${pluriel(n, "fichier ou lien", "fichiers ou liens")}</span>` : ""}${p.remises.length ? `<span>${pluriel(p.remises.length, "remise", "remises")}</span>` : ""}</span></span>
+        ${chip(ST_PIECE, etatPiece(p))}</button>`;
+    }).join("")}</div></section>`;
+  }).join("")}`;
+}
+
+function vueInstitutions() {
+  return `<h1>Institutions</h1>
+  <p class="lede">Une fiche par organisme : interlocuteur, date du dernier contact, référence du dossier, prochaine action et date limite. Créez une fiche pour chaque banque, assureur, éditeur ou administration que vous contactez.</p>
+  <p style="margin-top:14px"><button class="btn" data-act="ajouterInstitution">Ajouter un organisme</button></p>
+  <section class="section"><div class="ledger">${S.institutions.map(i => `<button class="row" data-fiche="inst:${i.id}"><span class="dot ${ST_INST[i.statut][1]}" aria-hidden="true"></span>
+    <span><span class="t">${esc(i.nom)}</span><span class="m"><span>${esc(i.type)}</span>${i.ref ? `<span>Dossier ${esc(i.ref)}</span>` : ""}${i.prochaine ? `<span>Ensuite : ${esc(i.prochaine)}</span>` : ""}${i.limite ? `<span>Avant le ${esc(fmtCourt(i.limite))}</span>` : ""}</span></span>
+    ${avatar(i.resp)}</button>`).join("")}</div></section>`;
+}
+
+function vueInventaire() {
+  return `<h1>Inventaire</h1>
+  <p class="lede">La photographie du patrimoine avant toute décision : ce qui existe, où, et avec quelle pièce à l’appui. N’inscrivez ici ni numéro de compte ni mot de passe.</p>
+  ${GUIDE.categoriesInventaire.map(([c, aide]) => {
+    const l = S.inventaire.filter(x => x.cat === c);
+    return `<section class="section"><div class="head"><h2>${esc(c)}</h2><button class="btn ghost sm" data-act="ajouterInventaire" data-cat="${esc(c)}">Ajouter</button></div>
+    <div class="ledger"><div class="sub">À rechercher : ${esc(aide)}</div>${l.map(x => `<button class="row" data-fiche="inv:${x.id}"><span class="dot ${ST_INV[x.etat][1]}" aria-hidden="true"></span>
+      <span><span class="t">${esc(x.libelle || "Sans titre")}</span><span class="m">${x.lieu ? `<span>${esc(x.lieu)}</span>` : ""}${x.valeur ? `<span>${esc(x.valeur)}</span>` : ""}${chip(ST_INV, x.etat)}</span></span>${avatar(x.resp)}</button>`).join("") || `<div class="empty">Rien d’inscrit.</div>`}</div></section>`;
+  }).join("")}`;
+}
+
+function vueQuestions() {
+  const q = ui.onglet === "questions";
+  const tri = [...S.questions].sort((a, b) => (a.resolue - b.resolue) || (b.le - a.le));
+  return `<h1>Questions et décisions</h1>
+  <p class="lede">Une question reste visible de tous jusqu’à sa réponse. Une décision s’inscrit avec sa date et l’accord de chacun.</p>
+  <div class="filters"><button data-onglet="questions" aria-pressed="${q}">Questions (${S.questions.filter(x => !x.resolue).length} en attente)</button><button data-onglet="decisions" aria-pressed="${!q}">Décisions (${S.decisions.length})</button></div>
+  ${q ? `
+  <section class="section"><h2>Poser une question</h2>
+    <label class="f" for="q-texte">Votre question</label><textarea id="q-texte"></textarea>
+    <div class="grid2">
+      <div><label class="f" for="q-pour">À qui</label><select id="q-pour"><option>La famille</option>${membres().map(p => `<option>${esc(p.nom)}</option>`).join("")}<option>Le notaire</option><option>L’avocat</option><option>L’administration</option></select></div>
+      <div><label class="f" for="q-action">Action concernée <span class="h">(facultatif)</span></label><select id="q-action"><option value="">Aucune</option>${actions().map(a => `<option value="${a.id}">${esc(a.titre)}</option>`).join("")}</select></div>
+    </div>
+    <p style="margin-top:14px"><button class="btn" data-act="poserQuestion">Poser la question</button></p></section>
+  <section class="section"><h2>Questions</h2><div class="ledger">${tri.map(ligneQuestion).join("") || `<div class="empty">Aucune question pour l’instant.</div>`}</div></section>`
+  : `
+  <section class="section"><h2>Inscrire une décision</h2>
+    <label class="f" for="d-texte">Ce que la famille a décidé</label><textarea id="d-texte"></textarea>
+    <label class="f" for="d-date">Date</label><input type="date" id="d-date" value="${today()}" style="max-width:220px">
+    <p style="margin-top:14px"><button class="btn" data-act="inscrireDecision">Inscrire la décision</button></p></section>
+  <section class="section"><h2>Décisions</h2>${S.decisions.map(d => {
+    const oui = d.accords.includes(moi), n = membres().length;
+    return `<div class="item"><strong>${esc(d.texte)}</strong>
+      <div class="by">Inscrite par ${esc(nom(d.par))} le ${esc(fmt(d.date))}. D’accord : ${d.accords.length ? esc(d.accords.map(prenom).join(", ")) : "personne encore"} (${d.accords.length} sur ${n}).</div>
+      <div class="acts"><button class="btn sm ${oui ? "ghost" : ""}" data-act="accord" data-id="${d.id}">${oui ? "Retirer mon accord" : "Je suis d’accord"}</button>
+      ${d.par === moi ? `<button class="btn sm danger" data-act="supprimerDecision" data-id="${d.id}">Supprimer</button>` : ""}</div></div>`;
+  }).join("") || `<div class="empty">Aucune décision inscrite.</div>`}</section>`}`;
+}
+
+function table(titres, lignes) {
+  return `<table><thead><tr>${titres.map(t => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>${lignes.map(l => `<tr>${l.map((c, i) => `<td data-l="${esc(titres[i])}">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+function vueReference() {
+  const bloc = (t, h, ouvert) => `<details class="ref"${ouvert ? " open" : ""}><summary>${esc(t)}</summary><div>${h}</div></details>`;
+  return `<h1>Référence</h1>
+  <p class="lede">Le guide « Décès au Sénégal : parcours administratif, successoral et patrimonial », mis à jour le ${GUIDE.maj}.</p>
+  <div class="note warn">${esc(GUIDE.avertissement)}</div>
+  <div class="section">
+  ${bloc("Le parcours critique en 12 étapes", table(["N°", "Étape", "Pièces clés", "Acteurs", "Résultat", "Quand"], GUIDE.parcours12), true)}
+  ${bloc("Les délais légaux", table(["Délai", "Formalité", "Point de départ", "Source"], GUIDE.delais))}
+  ${bloc("À ne pas faire", `<ul>${GUIDE.gardeFous.map(g => `<li>${esc(g)}</li>`).join("")}</ul>`)}
+  ${bloc("Parcours selon le statut du défunt", table(["Profil", "Acteurs", "Pièces de départ", "Résultat"], GUIDE.profils))}
+  ${bloc("Fiscalité : repères du CGI 2025", `<p class="small muted" style="margin-bottom:8px">Repères seulement. Le service de l’Enregistrement liquide les droits : ne calculez pas la succession vous-mêmes.</p>` + table(["Règle", "CGI 2025", "Conséquence pratique"], GUIDE.fiscal))}
+  ${bloc("Portails et services en ligne", table(["Portail", "Administration", "Accès famille", "Usage"], GUIDE.portails))}
+  ${bloc("Points de vigilance", table(["Sujet", "À retenir"], GUIDE.vigilance))}
+  ${bloc("Sources officielles", `<ul class="src">${sources(Object.keys(GUIDE.sources))}</ul>`)}
+  </div>`;
+}
+
+function vueFamille() {
+  const m = S.meta, peutDossier = !PARTAGE || estAdmin, off = peutDossier ? "" : " disabled";
+  const ac = id => acces.find(a => a.personne === id);
+  const etatLien = p => { const a = ac(p.id); return !a ? `<span class="chip">Sans lien</span>` : !a.actif ? `<span class="chip block">Lien révoqué</span>` : a.vu ? `<span class="chip done">Lien actif</span>` : `<span class="chip warn">Lien créé, jamais ouvert</span>`; };
+  const boutons = p => {
+    if (!PARTAGE) return p.role !== "sans_action" && m.coordinateur !== p.id ? `<button class="btn ghost sm" data-act="coordinateur" data-id="${p.id}">Confier la coordination</button>` : "";
+    const a = ac(p.id), actif = a && a.actif, b = [];
+    if (p.id === moi) b.push(`<button class="btn ghost sm" data-act="creerLien" data-id="${p.id}">Renouveler mon lien</button>`);
+    else if (estAdmin) {
+      b.push(`<button class="btn ghost sm" data-act="creerLien" data-id="${p.id}">${actif ? "Renouveler son lien" : "Créer son lien"}</button>`);
+      if (actif) b.push(`<button class="btn danger sm" data-act="revoquerLien" data-id="${p.id}">Révoquer</button>`);
+      if (actif && p.role !== "sans_action") b.push(`<button class="btn ghost sm" data-act="coordinateur" data-id="${p.id}">Confier la coordination</button>`);
+    }
+    return b.join("");
+  };
+  const lien = ui.lien ? `<div class="note" id="lien-box"><strong>Lien personnel de ${esc(nom(ui.lien.personne))}</strong>
+      <p class="small" style="margin-top:4px">${ui.lien.personne === moi ? "Votre ancien lien ne fonctionne plus. Gardez celui-ci : il ouvre le dossier sur vos autres appareils." : "Envoyez ce lien à " + esc(prenom(ui.lien.personne)) + " et à personne d’autre : toute personne qui le détient entre dans le dossier sous son nom. Il ne s’affichera plus après fermeture."}</p>
+      <input type="text" id="lien-url" readonly value="${esc(ui.lien.url)}">
+      <p style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="copierLien">Copier le lien</button><button class="btn ghost sm" data-act="fermerLien">Fermer</button></p></div>` : "";
+  return `<h1>Famille et dossier</h1>
+  <section class="section"><h2>La famille</h2>
+    ${PARTAGE ? `<p class="lede" style="margin-bottom:12px">Chacun entre avec son lien personnel. ${estAdmin ? "Vous coordonnez : vous créez, renouvelez et révoquez les liens." : esc(prenom(m.coordinateur) || "La personne qui coordonne") + " crée et renouvelle les liens."}</p>` : ""}
+    ${lien}
+    <div class="ledger">${S.people.map(p => `<div class="row plain person">${avatar(p.id)}<span><span class="t">${esc(p.nom)}</span><span class="m">${m.coordinateur === p.id ? `<span class="chip doing">Coordination</span>` : ""}${p.role === "sans_action" ? `<span>${esc(p.note || "Ne porte pas d’actions")}</span>` : `<span>${pluriel(S.actions.filter(a => a.resp === p.id && a.statut !== "fait" && a.statut !== "na").length, "action en cours", "actions en cours")}</span>`}${p.id === moi ? `<span class="chip">Vous</span>` : ""}${PARTAGE ? etatLien(p) : ""}</span></span>
+      <span class="acts-row">${boutons(p)}</span></div>`).join("")}</div>
+    ${peutDossier ? `<div class="inline" style="margin-top:12px"><div><label class="f" for="p-nom">Ajouter une personne</label><input type="text" id="p-nom" placeholder="Prénom et nom"></div><button class="btn ghost" data-act="ajouterPersonne">Ajouter</button></div>` : ""}
+    ${PARTAGE ? "" : `<p style="margin-top:14px"><button class="btn ghost sm" data-act="changerMoi">Je ne suis pas ${esc(prenom(moi))}</button></p>`}
+  </section>
+  <section class="section"><h2>Le dossier</h2>
+    ${peutDossier ? "" : `<p class="muted small">Seule la personne qui coordonne modifie ces informations.</p>`}
+    <label class="f" for="m-titre">Titre du dossier</label><input type="text" id="m-titre" value="${esc(m.titre)}" data-set="meta::titre"${off}>
+    <div class="grid2">
+      <div><label class="f" for="m-date">Date du décès <span class="h">(toutes les échéances en dépendent)</span></label><input type="date" id="m-date" value="${esc(m.dateDeces)}" data-set="meta::dateDeces"${off}></div>
+      <div><label class="f" for="m-heure">Heure</label><input type="time" id="m-heure" value="${esc(m.heureDeces)}" data-set="meta::heureDeces"${off}></div>
+    </div>
+    <label class="f" for="m-lieu">Lieu</label><input type="text" id="m-lieu" value="${esc(m.lieuDeces)}" data-set="meta::lieuDeces"${off}>
+  </section>
+  <section class="section"><h2>Sauvegarde</h2>
+    <p class="muted" style="max-width:68ch">${PARTAGE ? "L’export produit une copie du dossier à conserver, sans les fichiers versés." : "Dans cette version d’essai, tout reste dans ce navigateur. L’export produit un fichier de sauvegarde, sans les fichiers versés."}</p>
+    <p style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-act="exporter">Exporter la sauvegarde</button>
+      ${PARTAGE ? "" : `<label class="btn ghost" for="import">Importer une sauvegarde</label><input type="file" id="import" class="sr" accept="application/json,.json">
+      <button class="btn danger" data-act="reinitialiser">Tout remettre à zéro</button>`}</p>
+  </section>`;
+}
+const vuePlus = () => `<h1>Plus</h1><section class="section"><div class="ledger">
+  ${[["institutions", "Institutions"], ["inventaire", "Inventaire"], ["reference", "Référence"], ["famille", "Famille et dossier"]].map(([v, t]) => `<button class="row" data-vue="${v}"><span></span><span class="t">${t}</span><span aria-hidden="true">›</span></button>`).join("")}</div></section>`;
+
+/* ---------- Fiches ---------- */
+function ficheAction(id) {
+  const a = action(id); if (!a) return "";
+  const e = echeance(a), att = a.prereq.map(action).filter(Boolean), ch = GUIDE.chantiers.find(c => c.id === a.ch);
+  const insts = S.institutions.filter(i => (i.actions || []).includes(id));
+  const qs = questionsDe(id), hist = S.journal.filter(j => j.ref === "action:" + id).slice(0, 6);
+  return `<h2>${esc(a.titre)}</h2><p class="muted small" style="margin-top:4px">${esc(ch.id + ". " + ch.titre)}</p>
+  ${a.statut !== "fait" && a.statut !== "na" && attend(a).length ? `<div class="note warn">Cette action attend : ${esc(attend(a).map(p => p.titre).join(" ; "))}.</div>` : ""}
+  <div class="grid2">
+    <div><label class="f" for="a-statut">Statut</label><select id="a-statut" data-set="action:${id}:statut" data-dur>${options(STATUTS, a.statut)}</select></div>
+    <div><label class="f" for="a-resp">Responsable</label><select id="a-resp" data-set="action:${id}:resp" data-dur>${optionsGens(a.resp, "À attribuer")}</select></div>
+  </div>
+  ${a.resp !== moi && personne(moi) && personne(moi).role !== "sans_action" ? `<p style="margin-top:10px"><button class="btn sm" data-act="prendre" data-id="${id}">Je m’en charge</button></p>` : ""}
+  <label class="f" for="a-ech">Date visée par la famille ${a.mois && okDate(S.meta.dateDeces) ? `<span class="h">(échéance légale : ${esc(fmt(addMonths(S.meta.dateDeces, a.mois)))})</span>` : `<span class="h">(facultatif)</span>`}</label>
+  <input type="date" id="a-ech" value="${esc(a.echeance)}" data-set="action:${id}:echeance">
+  <label class="f" for="a-note">Où en est-on</label><textarea id="a-note" data-set="action:${id}:note" placeholder="Ce qui a été fait, ce qui reste, qui a été contacté">${esc(a.note)}</textarea>
+  ${a.perso ? `<label class="f" for="a-titre">Intitulé</label><input type="text" id="a-titre" value="${esc(a.titre)}" data-set="action:${id}:titre">
+    <label class="f" for="a-quoi">Description</label><textarea id="a-quoi" data-set="action:${id}:quoi">${esc(a.quoi)}</textarea>` : `
+  <dl class="kv">
+    ${a.quoi ? `<dt>De quoi il s’agit</dt><dd>${esc(a.quoi)}</dd>` : ""}
+    ${a.intrants.length ? `<dt>À réunir</dt><dd><ul>${a.intrants.map(i => `<li>${esc(i)}</li>`).join("")}</ul></dd>` : ""}
+    ${a.acteur ? `<dt>Auprès de</dt><dd>${esc(a.acteur)}</dd>` : ""}
+    ${a.resultat ? `<dt>Résultat attendu</dt><dd>${esc(a.resultat)}</dd>` : ""}
+    ${a.src.length ? `<dt>Sources</dt><dd><ul>${sources(a.src)}</ul></dd>` : ""}
+  </dl>`}
+  ${att.length ? `<h3>Étapes à terminer avant</h3><div class="ledger">${att.map(ligneAction).join("")}</div>` : ""}
+  ${a.pieces.length ? `<h3>Pièces liées</h3><div class="ledger">${a.pieces.map(piece).filter(Boolean).map(p => `<button class="row" data-fiche="piece:${p.id}"><span class="dot ${ST_PIECE[etatPiece(p)][1]}" aria-hidden="true"></span><span class="t">${esc(p.titre)}</span>${chip(ST_PIECE, etatPiece(p))}</button>`).join("")}</div>` : ""}
+  ${insts.length ? `<h3>Organismes</h3><div class="ledger">${insts.map(i => `<button class="row" data-fiche="inst:${i.id}"><span class="dot ${ST_INST[i.statut][1]}" aria-hidden="true"></span><span><span class="t">${esc(i.nom)}</span>${i.tel ? `<span class="m">${esc(i.tel)}</span>` : ""}</span>${chip(ST_INST, i.statut)}</button>`).join("")}</div>` : ""}
+  <h3>Questions sur cette action</h3>
+  ${qs.map(blocQuestion).join("")}
+  <label class="f" for="aq-texte">Poser une question à la famille</label><textarea id="aq-texte"></textarea>
+  <p style="margin-top:8px"><button class="btn ghost sm" data-act="poserQuestionAction" data-id="${id}">Poser la question</button></p>
+  ${hist.length ? `<h3>Historique</h3>${hist.map(j => `<p class="small muted" style="margin-top:4px">${esc(fmtQuand(j.le))} : ${esc(prenom(j.par))} ${esc(j.texte)}</p>`).join("")}` : ""}
+  ${a.perso ? `<p style="margin-top:26px"><button class="btn danger sm" data-act="supprimerAction" data-id="${id}">Supprimer cette action</button></p>` : ""}`;
+}
+function blocQuestion(q) {
+  return `<div class="item"><strong>${esc(q.texte)}</strong>
+    <div class="by">${esc(nom(q.par))}, ${esc(fmtQuand(q.le))}. Pour ${esc(q.pour)}. ${q.resolue ? "Résolue." : "En attente."}</div>
+    ${q.reponses.map(r => `<div class="reply">${esc(r.texte)}<div class="by">${esc(nom(r.par))}, ${esc(fmtQuand(r.le))}</div></div>`).join("")}
+    <label class="f" for="r-${q.id}">Répondre</label><textarea id="r-${q.id}" style="min-height:60px"></textarea>
+    <div class="acts"><button class="btn sm" data-act="repondre" data-id="${q.id}">Envoyer la réponse</button>
+      <button class="btn ghost sm" data-act="resoudre" data-id="${q.id}">${q.resolue ? "Rouvrir" : "Marquer comme résolue"}</button>
+      ${q.par === moi ? `<button class="btn danger sm" data-act="supprimerQuestion" data-id="${q.id}">Supprimer</button>` : ""}</div></div>`;
+}
+function ficheQuestion(id) {
+  const q = S.questions.find(x => x.id === id); if (!q) return "";
+  const a = q.action ? action(q.action) : null;
+  return `<h2>Question</h2>${blocQuestion(q)}${a ? `<h3>Action concernée</h3><div class="ledger">${ligneAction(a)}</div>` : ""}`;
+}
+function fichePiece(id) {
+  const p = piece(id); if (!p) return "";
+  const perso = !GUIDE.pieces.some(x => x.id === id);
+  const liees = actions().filter(a => a.pieces.includes(id));
+  return `<h2>${esc(p.titre)}</h2><p style="margin-top:6px">${chip(ST_PIECE, etatPiece(p))}</p>
+  ${perso ? `<label class="f" for="p-titre">Intitulé</label><input type="text" id="p-titre" value="${esc(p.titre)}" data-set="piece:${id}:titre">
+    <label class="f" for="p-cat">Catégorie</label><select id="p-cat" data-set="piece:${id}:cat" data-dur>${GUIDE.categoriesPieces.map(c => `<option${c === p.cat ? " selected" : ""}>${esc(c)}</option>`).join("")}</select>` : ""}
+  <div class="grid2">
+    <div><label class="f" for="p-det">Qui détient l’original</label><input type="text" id="p-det" list="gens" value="${esc(p.detenteur)}" data-set="piece:${id}:detenteur" placeholder="Nom, ou lieu où il se trouve"></div>
+    <div><label class="f" for="p-cop">Copies certifiées disponibles</label><input type="number" min="0" id="p-cop" value="${esc(p.copies)}" data-set="piece:${id}:copies"></div>
+  </div>
+  <datalist id="gens">${S.people.map(x => `<option value="${esc(x.nom)}">`).join("")}</datalist>
+  <h3>Fichiers versés</h3>
+  ${p.fichiers.map(f => `<div class="item"><strong>${esc(f.nom)}</strong><div class="by">${esc(taille(f.taille))}. Versé par ${esc(nom(f.par))}, ${esc(fmtQuand(f.le))}</div>
+    <div class="acts"><button class="btn ghost sm" data-act="ouvrirFichier" data-id="${f.id}" data-nom="${esc(f.nom)}">Télécharger</button><button class="btn danger sm" data-act="retirerFichier" data-piece="${id}" data-id="${f.id}">Retirer</button></div></div>`).join("")}
+  ${p.liens.map((l, i) => `<div class="item">${lienSur(l.url) ? `<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.nom || l.url)}</a>` : esc(l.nom || l.url)}<div class="by">Lien ajouté par ${esc(nom(l.par))}, ${esc(fmtQuand(l.le))}</div>
+    <div class="acts"><button class="btn danger sm" data-act="retirerLien" data-piece="${id}" data-i="${i}">Retirer</button></div></div>`).join("")}
+  <p style="margin-top:10px"><label class="btn" for="up-${id}">Verser un scan ou une photo</label><input type="file" id="up-${id}" class="sr" multiple data-verser="${id}" accept="image/*,application/pdf,.doc,.docx"></p>
+  <div class="inline"><div><label class="f" for="l-url">Ou coller un lien <span class="h">(Google Drive, par exemple)</span></label><input type="url" id="l-url" placeholder="https://"></div>
+    <div><label class="f" for="l-nom">Nom du lien</label><input type="text" id="l-nom"></div>
+    <button class="btn ghost" data-act="ajouterLien" data-id="${id}">Ajouter le lien</button></div>
+  <h3>Remises aux organismes</h3>
+  ${p.remises.map((r, i) => `<div class="item">${r.genre === "original" ? "Original" : "Copie"} remis à <strong>${esc(r.a)}</strong>${r.date ? " le " + esc(fmt(r.date)) : ""}<div class="by">Noté par ${esc(nom(r.par))}</div>
+    <div class="acts"><button class="btn danger sm" data-act="retirerRemise" data-piece="${id}" data-i="${i}">Retirer</button></div></div>`).join("") || `<p class="muted small">Aucune remise notée.</p>`}
+  <div class="inline"><div><label class="f" for="rm-a">Remis à</label><input type="text" id="rm-a" list="orgs"></div>
+    <div><label class="f" for="rm-genre">Nature</label><select id="rm-genre"><option value="copie">Copie</option><option value="original">Original</option></select></div>
+    <div><label class="f" for="rm-date">Date</label><input type="date" id="rm-date" value="${today()}"></div>
+    <button class="btn ghost" data-act="ajouterRemise" data-id="${id}">Noter la remise</button></div>
+  <datalist id="orgs">${S.institutions.map(i => `<option value="${esc(i.nom)}">`).join("")}</datalist>
+  <label class="f" for="p-note">Note</label><textarea id="p-note" data-set="piece:${id}:note">${esc(p.note)}</textarea>
+  ${liees.length ? `<h3>Sert à</h3><div class="ledger">${liees.map(ligneAction).join("")}</div>` : ""}
+  ${perso ? `<p style="margin-top:26px"><button class="btn danger sm" data-act="supprimerPiece" data-id="${id}">Supprimer cette pièce</button></p>` : ""}`;
+}
+function ficheInst(id) {
+  const i = S.institutions.find(x => x.id === id); if (!i) return "";
+  const champ = (k, l, t = "text", h = "") => `<div><label class="f" for="i-${k}">${l}${h ? ` <span class="h">${h}</span>` : ""}</label><input type="${t}" id="i-${k}" value="${esc(i[k])}" data-set="inst:${id}:${k}"></div>`;
+  const liees = (i.actions || []).map(action).filter(Boolean);
+  return `<h2>${esc(i.nom)}</h2>
+  <div class="grid2">${champ("nom", "Nom")}<div><label class="f" for="i-type">Type</label><select id="i-type" data-set="inst:${id}:type" data-dur>${GUIDE.typesInstitution.map(t => `<option${t === i.type ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></div>
+    <div><label class="f" for="i-statut">Où en est le dossier</label><select id="i-statut" data-set="inst:${id}:statut" data-dur>${options(ST_INST, i.statut)}</select></div>
+    <div><label class="f" for="i-resp">Qui suit</label><select id="i-resp" data-set="inst:${id}:resp" data-dur>${optionsGens(i.resp, "À attribuer")}</select></div>
+    ${champ("contact", "Interlocuteur")}${champ("tel", "Téléphone")}${champ("email", "E-mail")}${champ("adresse", "Adresse")}
+    ${champ("dernierContact", "Dernier contact", "date")}${champ("ref", "Référence du dossier")}
+    ${champ("prochaine", "Prochaine action")}${champ("limite", "Date limite", "date")}</div>
+  <label class="f" for="i-note">Notes <span class="h">(pièces demandées, pièces remises, réponses reçues)</span></label><textarea id="i-note" data-set="inst:${id}:note">${esc(i.note)}</textarea>
+  ${liees.length ? `<h3>Actions liées</h3><div class="ledger">${liees.map(ligneAction).join("")}</div>` : ""}
+  ${!GUIDE.institutions.some(x => x.id === id) ? `<p style="margin-top:26px"><button class="btn danger sm" data-act="supprimerInstitution" data-id="${id}">Supprimer cette fiche</button></p>` : ""}`;
+}
+function ficheInv(id) {
+  const x = S.inventaire.find(v => v.id === id); if (!x) return "";
+  return `<h2>${esc(x.libelle || "Nouvel élément")}</h2>
+  <label class="f" for="v-lib">Désignation</label><input type="text" id="v-lib" value="${esc(x.libelle)}" data-set="inv:${id}:libelle" placeholder="Maison, compte, contrat d’édition, prêt">
+  <div class="grid2">
+    <div><label class="f" for="v-cat">Catégorie</label><select id="v-cat" data-set="inv:${id}:cat" data-dur>${GUIDE.categoriesInventaire.map(([c]) => `<option${c === x.cat ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+    <div><label class="f" for="v-etat">État</label><select id="v-etat" data-set="inv:${id}:etat" data-dur>${options(ST_INV, x.etat)}</select></div>
+    <div><label class="f" for="v-lieu">Lieu ou pays</label><input type="text" id="v-lieu" value="${esc(x.lieu)}" data-set="inv:${id}:lieu"></div>
+    <div><label class="f" for="v-val">Valeur estimée <span class="h">(facultatif)</span></label><input type="text" id="v-val" value="${esc(x.valeur)}" data-set="inv:${id}:valeur"></div>
+    <div><label class="f" for="v-resp">Qui suit</label><select id="v-resp" data-set="inv:${id}:resp" data-dur>${optionsGens(x.resp, "À attribuer")}</select></div>
+  </div>
+  <label class="f" for="v-note">Détails <span class="h">(titre exact, établissement, pièces à l’appui ; ni numéro de compte ni mot de passe)</span></label><textarea id="v-note" data-set="inv:${id}:note">${esc(x.note)}</textarea>
+  <p style="margin-top:26px"><button class="btn danger sm" data-act="supprimerInventaire" data-id="${id}">Supprimer</button></p>`;
+}
+
+/* ---------- Rendu ---------- */
+const VUES = { accueil: ["Accueil", vueAccueil], parcours: ["Parcours", vueParcours], pieces: ["Pièces", vuePieces], institutions: ["Institutions", vueInstitutions], inventaire: ["Inventaire", vueInventaire], questions: ["Questions et décisions", vueQuestions], reference: ["Référence", vueReference], famille: ["Famille et dossier", vueFamille], plus: ["Plus", vuePlus] };
+const FICHES = { action: ficheAction, piece: fichePiece, inst: ficheInst, inv: ficheInv, question: ficheQuestion };
+
+function rendre(quoi) {
+  if (PARTAGE && !pret) return;
+  if (!moi) return rendreChoix();
+  $("#choix").hidden = true;
+  if (quoi !== "fiche") {
+    $("#vue").innerHTML = VUES[ui.vue][1]();
+    const compte = { parcours: S.actions.filter(a => a.resp === moi && a.statut !== "fait" && a.statut !== "na").length, questions: S.questions.filter(q => !q.resolue).length };
+    $("#rail-nav").innerHTML = ["accueil", "parcours", "pieces", "institutions", "inventaire", "questions", "reference", "famille"].map(v => `<button class="nav" data-vue="${v}"${ui.vue === v ? ` aria-current="page"` : ""}><span>${VUES[v][0]}</span>${compte[v] ? `<span class="count">${compte[v]}</span>` : ""}</button>`).join("");
+    const autres = ["institutions", "inventaire", "reference", "famille", "plus"];
+    $("#tabs").innerHTML = [["accueil", "Accueil"], ["parcours", "Parcours"], ["pieces", "Pièces"], ["questions", "Questions"], ["plus", "Plus"]].map(([v, t]) => `<button data-vue="${v}"${(ui.vue === v || (v === "plus" && autres.includes(ui.vue))) ? ` aria-current="page"` : ""}>${t}</button>`).join("");
+    document.querySelectorAll("[data-moi]").forEach(e => { e.textContent = nom(moi); });
+  }
+  const zone = $("#fiche");
+  if (ui.fiche) {
+    const [t, id] = ui.fiche.split(":"), h = FICHES[t] ? FICHES[t](id) : "";
+    if (!h) { ui.fiche = null; zone.hidden = true; $("#fond").hidden = true; return; }
+    const pos = zone.scrollTop, etait = !zone.hidden && zone.dataset.id === ui.fiche;
+    zone.innerHTML = `<button class="btn ghost sm x" data-act="fermer">Fermer</button>` + h;
+    zone.dataset.id = ui.fiche; zone.hidden = false; $("#fond").hidden = false;
+    zone.scrollTop = etait ? pos : 0;
+    if (!etait) zone.focus();
+  } else { zone.hidden = true; $("#fond").hidden = true; zone.dataset.id = ""; }
+}
+function rendreChoix() {
+  $("#choix").hidden = false;
+  $("#choix-liste").innerHTML = S.people.map(p => `<button data-act="jeSuis" data-id="${p.id}">${avatar(p.id)}<span>${esc(p.nom)}</span></button>`).join("");
+}
+let minuteur;
+function dire(t) { const e = $("#toast"); e.textContent = t; e.hidden = false; clearTimeout(minuteur); minuteur = setTimeout(() => { e.hidden = true; }, 3200); return "rien"; }
+function aller(v) { ui.vue = v; ui.fiche = null; try { history.replaceState(null, "", "#" + v); } catch (e) { /* aperçu */ } rendre(); window.scrollTo(0, 0); }
+function ouvrir(f) { ui.fiche = f; rendre("fiche"); }
+
+/* ---------- Actions ---------- */
+const COLL = { action: "actions", piece: "pieces", inst: "institutions", inv: "inventaire" };
+function poser(type, id, champ, val) {
+  if (type === "meta") { S.meta[champ] = val; journal("a modifié " + ({ titre: "le titre du dossier", dateDeces: "la date du décès", heureDeces: "l’heure du décès", lieuDeces: "le lieu du décès" }[champ] || "le dossier")); return; }
+  const o = S[COLL[type]].find(x => x.id === id); if (!o || o[champ] === val) return;
+  o[champ] = val;
+  if (type === "action") {
+    const t = action(id).titre;
+    if (champ === "statut") journal(`a passé « ${t} » à : ${STATUTS[val][0]}`, "action:" + id);
+    else if (champ === "resp") journal(val ? `a confié « ${t} » à ${nom(val)}` : `a retiré le responsable de « ${t} »`, "action:" + id);
+    else if (champ === "note") journal(`a mis à jour le suivi de « ${t} »`, "action:" + id);
+    else if (champ === "echeance") journal(`a fixé la date visée de « ${t} »${val ? " au " + fmt(val) : ""}`, "action:" + id);
+  } else if (type === "inst" && champ === "statut") journal(`a passé le dossier « ${o.nom} » à : ${ST_INST[val][0]}`);
+  else if (type === "piece" && champ === "detenteur" && val) journal(`a localisé « ${o.titre} » : ${val}`);
+}
+function nouvelleQuestion(texte, pour, act) {
+  texte = texte.trim(); if (!texte) { dire("Écrivez d’abord votre question."); return false; }
+  S.questions.unshift({ id: uid("q"), texte, pour, action: act || "", par: moi, le: Date.now(), resolue: false, reponses: [] });
+  journal("a posé une question : " + texte.slice(0, 80), act ? "action:" + act : "");
+  return true;
+}
+const ACTES = {
+  fermer() { ui.fiche = null; },
+  jeSuis(e) { moi = e.dataset.id; ls.set(KEY_MOI, moi); },
+  changerMoi() { moi = null; ls.del(KEY_MOI); },
+  prendre(e) { poser("action", e.dataset.id, "resp", moi); const a = S.actions.find(x => x.id === e.dataset.id); if (a.statut === "a_faire") poser("action", a.id, "statut", "en_cours"); },
+  ajouterAction(e) {
+    const id = uid("x");
+    S.actions.push({ id, ch: e.dataset.ch, titre: "Nouvelle action", quoi: "", statut: "a_faire", resp: "", echeance: "", note: "" });
+    journal("a ajouté une action", "action:" + id); ui.fiche = "action:" + id;
+  },
+  supprimerAction(e) { if (!confirm("Supprimer cette action ?")) return; S.actions = S.actions.filter(a => a.id !== e.dataset.id); S.questions.forEach(q => { if (q.action === e.dataset.id) q.action = ""; }); ui.fiche = null; },
+  ajouterPiece() { const id = uid("d"); S.pieces.push({ id, cat: "Autres", titre: "Nouvelle pièce", detenteur: "", copies: "", fichiers: [], liens: [], remises: [], note: "" }); ui.fiche = "piece:" + id; },
+  supprimerPiece(e) { if (!confirm("Supprimer cette pièce et ses fichiers ?")) return; const p = piece(e.dataset.id); p.fichiers.forEach(f => supprimerFichier(f.id)); S.pieces = S.pieces.filter(x => x.id !== p.id); ui.fiche = null; },
+  async ouvrirFichier(e) {
+    let f = null; for (const p of S.pieces) f = f || p.fichiers.find(x => x.id === e.dataset.id);
+    if (!f) return dire("Ce fichier n’existe plus.");
+    let b = null;
+    try { b = await lireFichier(f, (i, n) => { if (n > 1) dire("Téléchargement : " + i + " sur " + n); }); }
+    catch (x) { if (x.refus) { sortir("Votre lien a été remplacé ou révoqué. Demandez un nouveau lien à la personne qui coordonne."); return "rien"; } return dire("Le téléchargement a échoué. Vérifiez votre réseau, puis réessayez."); }
+    if (!b) return dire("Ce fichier n’est pas disponible dans ce navigateur.");
+    const u = URL.createObjectURL(b), a = document.createElement("a");
+    a.href = u; a.target = "_blank"; a.rel = "noopener"; a.download = e.dataset.nom; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 60000);
+    return "rien";
+  },
+  retirerFichier(e) { if (!confirm("Retirer ce fichier ?")) return; const p = piece(e.dataset.piece); p.fichiers = p.fichiers.filter(f => f.id !== e.dataset.id); supprimerFichier(e.dataset.id); journal(`a retiré un fichier de « ${p.titre} »`); },
+  ajouterLien(e) {
+    const u = $("#l-url").value.trim(); if (!lienSur(u)) return dire("Le lien doit commencer par https://");
+    const p = piece(e.dataset.id); p.liens.push({ url: u, nom: $("#l-nom").value.trim(), par: moi, le: Date.now() }); journal(`a ajouté un lien dans « ${p.titre} »`);
+  },
+  retirerLien(e) { piece(e.dataset.piece).liens.splice(Number(e.dataset.i), 1); },
+  ajouterRemise(e) {
+    const a = $("#rm-a").value.trim(); if (!a) return dire("Indiquez à qui la pièce a été remise.");
+    const p = piece(e.dataset.id); p.remises.push({ a, genre: $("#rm-genre").value, date: $("#rm-date").value, par: moi });
+    journal(`a noté la remise ${$("#rm-genre").value === "original" ? "de l’original" : "d’une copie"} de « ${p.titre} » à ${a}`);
+  },
+  retirerRemise(e) { piece(e.dataset.piece).remises.splice(Number(e.dataset.i), 1); },
+  ajouterInstitution() { const id = uid("i"); S.institutions.push({ id, nom: "Nouvel organisme", type: "Banque", adresse: "", tel: "", email: "", contact: "", dernierContact: "", ref: "", prochaine: "", limite: "", resp: "", statut: "a_contacter", note: "", actions: [] }); journal("a ajouté un organisme"); ui.fiche = "inst:" + id; },
+  supprimerInstitution(e) { if (!confirm("Supprimer cette fiche ?")) return; S.institutions = S.institutions.filter(i => i.id !== e.dataset.id); ui.fiche = null; },
+  ajouterInventaire(e) { const id = uid("v"); S.inventaire.push({ id, cat: e.dataset.cat, libelle: "", lieu: "", valeur: "", etat: "identifie", resp: "", note: "" }); journal(`a ajouté un élément à l’inventaire (${e.dataset.cat})`); ui.fiche = "inv:" + id; },
+  supprimerInventaire(e) { if (!confirm("Supprimer cet élément ?")) return; S.inventaire = S.inventaire.filter(v => v.id !== e.dataset.id); ui.fiche = null; },
+  poserQuestion() { if (nouvelleQuestion($("#q-texte").value, $("#q-pour").value, $("#q-action").value)) dire("Question posée."); else return "rien"; },
+  poserQuestionAction(e) { if (!nouvelleQuestion($("#aq-texte").value, "La famille", e.dataset.id)) return "rien"; },
+  repondre(e) {
+    const t = $("#r-" + e.dataset.id).value.trim(); if (!t) { dire("Écrivez d’abord votre réponse."); return "rien"; }
+    const q = S.questions.find(x => x.id === e.dataset.id); q.reponses.push({ par: moi, texte: t, le: Date.now() });
+    journal("a répondu à : " + q.texte.slice(0, 80), q.action ? "action:" + q.action : "");
+  },
+  resoudre(e) { const q = S.questions.find(x => x.id === e.dataset.id); q.resolue = !q.resolue; journal((q.resolue ? "a marqué comme résolue : " : "a rouvert : ") + q.texte.slice(0, 80), q.action ? "action:" + q.action : ""); },
+  supprimerQuestion(e) { if (!confirm("Supprimer cette question ?")) return; S.questions = S.questions.filter(q => q.id !== e.dataset.id); if (ui.fiche === "question:" + e.dataset.id) ui.fiche = null; },
+  inscrireDecision() {
+    const t = $("#d-texte").value.trim(); if (!t) { dire("Écrivez d’abord la décision."); return "rien"; }
+    S.decisions.unshift({ id: uid("c"), le: Date.now(), texte: t, date: $("#d-date").value || today(), par: moi, accords: personne(moi).role === "sans_action" ? [] : [moi] });
+    journal("a inscrit une décision : " + t.slice(0, 80));
+  },
+  accord(e) { const d = S.decisions.find(x => x.id === e.dataset.id), i = d.accords.indexOf(moi); if (i >= 0) d.accords.splice(i, 1); else d.accords.push(moi); journal((i >= 0 ? "a retiré son accord sur : " : "a donné son accord sur : ") + d.texte.slice(0, 80)); },
+  supprimerDecision(e) { if (!confirm("Supprimer cette décision ?")) return; S.decisions = S.decisions.filter(d => d.id !== e.dataset.id); },
+  async coordinateur(e) {
+    if (!PARTAGE) { S.meta.coordinateur = e.dataset.id; journal("a confié la coordination à " + nom(e.dataset.id)); return; }
+    if (!confirm("Confier la coordination à " + nom(e.dataset.id) + " ? Vous ne pourrez plus gérer les liens ni modifier le dossier.")) return "rien";
+    try { await rpc("suivi_coordination", { p_code: code, p_personne: e.dataset.id }); }
+    catch (x) { return dire(x.message === "lien_requis" ? "Créez d’abord son lien personnel." : "La coordination n’a pas pu être confiée. Réessayez."); }
+    journal("a confié la coordination à " + nom(e.dataset.id)); sauver(); await tirer(); rendre(); return "rien";
+  },
+  async creerLien(e) {
+    const id = e.dataset.id, soi = id === moi, a = acces.find(x => x.personne === id);
+    if (a && a.actif && !confirm(soi ? "Renouveler votre lien ? L’ancien cessera de fonctionner sur tous vos appareils." : "Renouveler le lien de " + nom(id) + " ? L’ancien cessera de fonctionner.")) return "rien";
+    let r; try { r = await rpc("suivi_lien_creer", { p_code: code, p_personne: id }); } catch (x) { return dire("Le lien n’a pas pu être créé. Réessayez."); }
+    acces = r.acces; if (soi) { code = r.code; ls.set(KEY_CODE, code); }
+    ui.lien = { personne: id, url: location.href.split("#")[0] + "#k=" + r.code };
+    rendre(); const b = $("#lien-box"); if (b) b.scrollIntoView({ block: "center" });
+    return "rien";
+  },
+  async revoquerLien(e) {
+    if (!confirm("Révoquer le lien de " + nom(e.dataset.id) + " ? Cette personne ne pourra plus ouvrir le dossier.")) return "rien";
+    try { acces = (await rpc("suivi_lien_revoquer", { p_code: code, p_personne: e.dataset.id })).acces; } catch (x) { return dire("Le lien n’a pas pu être révoqué. Réessayez."); }
+    rendre(); return "rien";
+  },
+  async copierLien() {
+    const i = $("#lien-url"); let ok = false;
+    try { await navigator.clipboard.writeText(i.value); ok = true; } catch (x) { try { i.select(); ok = document.execCommand("copy"); } catch (y) { /* copie manuelle */ } }
+    return dire(ok ? "Lien copié." : "Sélectionnez le lien et copiez-le.");
+  },
+  fermerLien() { ui.lien = null; },
+  entrerCode() {
+    const v = $("#acces-code").value.trim(), m = v.match(/k=([A-Za-z0-9]{32,128})/) || v.match(/^([A-Za-z0-9]{32,128})$/);
+    if (!m) { ecranAcces("Ce lien n’a pas la bonne forme. Collez le lien complet que vous avez reçu."); return "rien"; }
+    code = m[1]; ls.set(KEY_CODE, code); entrer(); return "rien";
+  },
+  reessayer() { entrer(); return "rien"; },
+  ajouterPersonne() { const n = $("#p-nom").value.trim(); if (!n) { dire("Indiquez un nom."); return "rien"; } S.people.push({ id: uid("p"), nom: n, role: "membre", ordre: S.people.reduce((x, p) => Math.max(x, p.ordre ?? 0), 0) + 1 }); journal("a ajouté " + n + " à la famille"); },
+  exporter() {
+    const u = URL.createObjectURL(new Blob([JSON.stringify(S, null, 2)], { type: "application/json" })), a = document.createElement("a");
+    a.href = u; a.download = "suivi-succession-" + today() + ".json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 10000);
+    return "rien";
+  },
+  reinitialiser() { if (!confirm("Effacer toutes les mises à jour de cet essai et repartir du dossier de départ ?")) return; S = etatInitial(GUIDE, CASE_SEED); ui.fiche = null; }
+};
+
+document.addEventListener("click", async ev => {
+  const el = ev.target.closest("[data-vue],[data-fiche],[data-filtre],[data-onglet],[data-act]");
+  if (!el || el.tagName === "INPUT") return;
+  if (el.dataset.vue) return aller(el.dataset.vue);
+  if (el.dataset.fiche) return ouvrir(el.dataset.fiche);
+  if (el.dataset.filtre) { ui.filtre = el.dataset.filtre; return aller("parcours"); }
+  if (el.dataset.onglet) { ui.onglet = el.dataset.onglet; return rendre(); }
+  const f = ACTES[el.dataset.act]; if (!f) return;
+  if ((await f(el)) === "rien") return;
+  sauver(); rendre();
+});
+document.addEventListener("change", async ev => {
+  const el = ev.target;
+  if (el.id === "import" && el.files[0] && !PARTAGE) {
+    try { const d = JSON.parse(await el.files[0].text()); if (d.v !== 1 || !Array.isArray(d.actions) || !Array.isArray(d.people)) throw 0; S = d; if (!S.people.some(p => p.id === moi)) moi = null; sauver(); rendre(); dire("Sauvegarde importée."); }
+    catch (e) { dire("Ce fichier n’est pas une sauvegarde valide."); }
+    return;
+  }
+  if (el.dataset.verser) {
+    const idPiece = el.dataset.verser, liste = [...el.files]; let n = 0; el.value = "";
+    for (const f of liste) {
+      if (f.size > 25 * 1048576) { dire("« " + f.name + " » dépasse 25 Mo."); continue; }
+      const id = uid("f"); let parts;
+      try { parts = await ecrireFichier(id, f, (i, t) => { if (t > 1) dire("Envoi de « " + f.name + " » : " + i + " sur " + t); }); }
+      catch (x) {
+        if (x.refus) return sortir("Votre lien a été remplacé ou révoqué. Demandez un nouveau lien à la personne qui coordonne.");
+        supprimerFichier(id);
+        dire(x.message === "espace_plein" ? "L’espace de stockage est plein." : "L’envoi de « " + f.name + " » a échoué. Vérifiez votre réseau, puis réessayez."); continue;
+      }
+      const p = piece(idPiece); if (!p) { supprimerFichier(id); continue; }
+      p.fichiers.push({ id, nom: f.name, taille: f.size, type: f.type, n: parts, par: moi, le: Date.now() }); n++;
+      journal(`a versé un fichier dans « ${p.titre} »`); sauver();
+    }
+    if (n) { rendre(); dire(n > 1 ? "Fichiers versés." : "Fichier versé."); }
+    return;
+  }
+  if (el.dataset.set) {
+    const [type, id, champ] = el.dataset.set.split(":");
+    poser(type, id, champ, el.value.trim ? el.value.trim() : el.value);
+    sauver();
+    /* Les listes se redessinent ; la fiche ne se redessine que pour les menus, pour ne pas couper la saisie. */
+    if ("dur" in el.dataset) rendre(); else if (type !== "meta") $("#vue").innerHTML = VUES[ui.vue][1]();
+  }
+});
+document.addEventListener("keydown", ev => { if (ev.key === "Escape" && ui.fiche) { ui.fiche = null; rendre(); } });
+$("#fond").addEventListener("click", () => { ui.fiche = null; rendre(); });
+
+document.addEventListener("focusout", () => setTimeout(() => { if (aRedessiner && !enSaisie()) redessinerDoux(); }, 150));
+$("#essai").hidden = PARTAGE;
+if (PARTAGE && !(BASE.url && BASE.key)) {
+  $("#acces").hidden = false; $("#acces-code").closest(".box").innerHTML = `<h1>Page non reliée</h1><p class="lede">Cette page n’est pas encore reliée à sa base. Renseignez l’adresse du projet et la clé publique dans le fichier config.js, à côté de cette page.</p>`;
+} else if (PARTAGE) {
+  const m = location.hash.match(/k=([A-Za-z0-9]{32,128})/);
+  if (m) { code = m[1]; ls.set(KEY_CODE, code); try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* aperçu */ } }
+  else code = ls.get(KEY_CODE);
+  setInterval(() => { if (pret && !document.hidden) tirer(); }, 20000);
+  document.addEventListener("visibilitychange", () => { if (pret && !document.hidden) tirer(); });
+  window.addEventListener("online", () => { if (pret) { tirer(); envoyer(); } });
+  window.addEventListener("beforeunload", ev => { if (pret && (envoiEnCours || changements().length)) { ev.preventDefault(); ev.returnValue = ""; } });
+  if (code) entrer(); else ecranAcces("");
+} else {
+  const h = location.hash.slice(1); if (VUES[h]) ui.vue = h;
+  rendre();
+}
+})();
+
+</script>
+</body>
+</html>
